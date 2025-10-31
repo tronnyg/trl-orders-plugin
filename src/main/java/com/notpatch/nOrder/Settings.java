@@ -11,7 +11,8 @@ import java.util.stream.Collectors;
 
 public class Settings {
 
-    public Settings() {}
+    public Settings() {
+    }
 
     public static String ORDER_MENU_PERMISSION;
     public static String ORDER_PERMISSION;
@@ -40,7 +41,7 @@ public class Settings {
     public static String PROGRESS_BAR_INCOMPLETE_COLOR;
 
 
-    public static void loadSettings(){
+    public static void loadSettings() {
         Configuration config = NOrder.getInstance().getConfig();
         ORDER_PERMISSION = config.getString("permissions.order", "norder.use");
         ORDER_MENU_PERMISSION = config.getString("permissions.order-menu", "norder.menu");

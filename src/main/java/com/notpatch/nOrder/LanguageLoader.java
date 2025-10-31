@@ -100,11 +100,11 @@ public class LanguageLoader {
         return main.getConfig().getString("lang", "en_US");
     }
 
-    public static String getMessage(String path){
+    public static String getMessage(String path) {
         return NOrder.getInstance().getLanguageLoader().get(path);
     }
 
-    public static List<String> getMessageList(String path){
+    public static List<String> getMessageList(String path) {
         return NOrder.getInstance().getLanguageLoader().getList(path);
     }
 }

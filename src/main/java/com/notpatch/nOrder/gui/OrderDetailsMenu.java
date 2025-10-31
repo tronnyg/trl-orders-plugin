@@ -95,7 +95,7 @@ public class OrderDetailsMenu extends FastInv {
                     player.getInventory().addItem(excessItem).forEach((slot, leftover) ->
                             player.getWorld().dropItemNaturally(player.getLocation(), leftover));
 
-                    player.sendMessage(LanguageLoader.getMessage("delivery-excess-items").replace("%amount%", excess+""));
+                    player.sendMessage(LanguageLoader.getMessage("delivery-excess-items").replace("%amount%", excess + ""));
                 }
             }
 
@@ -104,7 +104,7 @@ public class OrderDetailsMenu extends FastInv {
 
                 order.addDelivered(totalAmount);
 
-                player.sendMessage(LanguageLoader.getMessage("delivery-success").replace("%material%", order.getMaterial().name()).replace("%amount%", totalAmount+""));
+                player.sendMessage(LanguageLoader.getMessage("delivery-success").replace("%material%", order.getMaterial().name()).replace("%amount%", totalAmount + ""));
                 player.sendMessage(LanguageLoader.getMessage("delivery-earnings").replace("%amount%", String.format("%.2f", earning)));
 
                 NOrder.getInstance().getEconomy().depositPlayer(player, earning);
@@ -152,13 +152,13 @@ public class OrderDetailsMenu extends FastInv {
             return false;
         }
 
-        if(item1 instanceof Damageable && item2 instanceof Damageable) {
+        if (item1 instanceof Damageable && item2 instanceof Damageable) {
             Damageable dmg1 = (Damageable) item1.getItemMeta();
-            if(dmg1.getDamage() < item1.getType().getMaxDurability()){
+            if (dmg1.getDamage() < item1.getType().getMaxDurability()) {
                 return false;
             }
             Damageable dmg2 = (Damageable) item2.getItemMeta();
-            if(dmg2.getDamage() < item2.getType().getMaxDurability()){
+            if (dmg2.getDamage() < item2.getType().getMaxDurability()) {
                 return false;
             }
         }

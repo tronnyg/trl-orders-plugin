@@ -20,7 +20,7 @@ public class PlayerStatisticsManager {
     @Getter
     private HashMap<UUID, PlayerStatistics> statisticsMap = new HashMap<>();
 
-    public PlayerStatisticsManager(NOrder main){
+    public PlayerStatisticsManager(NOrder main) {
         this.main = main;
         this.databaseManager = main.getDatabaseManager();
     }
@@ -50,15 +50,15 @@ public class PlayerStatisticsManager {
 
     public void saveStatistics() {
         String query = """
-            INSERT INTO player_stats (player_id, player_name, delivered_items, collected_items, total_orders, total_earnings)
-            VALUES (?, ?, ?, ?, ?, ?)
-            ON CONFLICT(player_id) DO UPDATE SET
-            player_name = ?,
-            delivered_items = ?,
-            collected_items = ?,
-            total_orders = ?,
-            total_earnings = ?
-            """;
+                INSERT INTO player_stats (player_id, player_name, delivered_items, collected_items, total_orders, total_earnings)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(player_id) DO UPDATE SET
+                player_name = ?,
+                delivered_items = ?,
+                collected_items = ?,
+                total_orders = ?,
+                total_earnings = ?
+                """;
 
         try (Connection conn = databaseManager.getDataSource().getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {

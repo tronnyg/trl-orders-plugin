@@ -7,9 +7,9 @@ import org.bukkit.permissions.PermissionAttachmentInfo;
 
 public class PlayerUtil {
 
-    public static Player getPlayer(OfflinePlayer offlinePlayer){
-        if(offlinePlayer instanceof Player player){
-            if(player.isOnline()) return player;
+    public static Player getPlayer(OfflinePlayer offlinePlayer) {
+        if (offlinePlayer instanceof Player player) {
+            if (player.isOnline()) return player;
         }
         return null;
     }
@@ -61,7 +61,6 @@ public class PlayerUtil {
         if (player == null) return false;
         return player.hasPermission(adminPermission) || player.isOp();
     }
-
 
 
 }

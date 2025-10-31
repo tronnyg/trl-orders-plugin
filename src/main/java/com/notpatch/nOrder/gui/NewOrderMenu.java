@@ -33,51 +33,55 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class NewOrderMenu extends FastInv implements Listener {
-    
+
     private final NOrder plugin;
     private final Configuration config;
-    
-    @Getter @Setter
+
+    @Getter
+    @Setter
     private ItemStack selectedItem;
-    
-    @Getter @Setter
+
+    @Getter
+    @Setter
     private int quantity = 1;
-    
-    @Getter @Setter
+
+    @Getter
+    @Setter
     private double pricePerItem = 1.0;
 
-    @Getter @Setter
+    @Getter
+    @Setter
     private boolean isHighlighted = false;
-    
+
     private final Map<UUID, ChatInputState> playerInputStates = new HashMap<>();
     private BukkitTask inputTimeoutTask;
-    
+
     private enum ChatInputState {
         NONE, WAITING_FOR_ITEM, WAITING_FOR_QUANTITY, WAITING_FOR_PRICE
     }
-    
+
     public NewOrderMenu() {
-        super(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getInt("new-order-menu.size"), 
-              ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("new-order-menu.title")));
-        
+        super(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getInt("new-order-menu.size"),
+                ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("new-order-menu.title")));
+
         this.plugin = NOrder.getInstance();
         this.config = plugin.getConfigurationManager().getMenuConfiguration().getConfiguration();
-        
+
         Bukkit.getPluginManager().registerEvents(this, plugin);
         initializeMenu();
     }
-    
+
     private void initializeMenu() {
         ConfigurationSection itemsSection = config.getConfigurationSection("new-order-menu.items");
-        
+
         if (itemsSection != null) {
             for (String key : itemsSection.getKeys(false)) {
                 ConfigurationSection itemSection = itemsSection.getConfigurationSection(key);
-                
+
                 if (itemSection != null) {
                     ItemStack item = ItemBuilder.getItemFromSection(itemSection);
                     String action = itemSection.getString("action");
-                    
+
                     if (itemSection.contains("slot")) {
                         int slot = itemSection.getInt("slot");
                         setItem(slot, item, e -> {
@@ -98,7 +102,7 @@ public class NewOrderMenu extends FastInv implements Listener {
                 }
             }
         }
-        
+
         updateMenuItems();
     }
 
@@ -111,23 +115,23 @@ public class NewOrderMenu extends FastInv implements Listener {
         this.selectedItem = new ItemStack(material);
         updateMenuItems();
     }
-    
+
     private List<Integer> parseSlots(String slotsString) {
         List<Integer> slots = new ArrayList<>();
-        
+
         if (slotsString == null) return slots;
-        
+
         slotsString = slotsString.replace("[", "").replace("]", "");
         String[] parts = slotsString.split(",");
-        
+
         for (String part : parts) {
             part = part.trim();
-            
+
             if (part.contains("-")) {
                 String[] range = part.split("-");
                 int start = Integer.parseInt(range[0].trim());
                 int end = Integer.parseInt(range[1].trim());
-                
+
                 for (int i = start; i <= end; i++) {
                     slots.add(i);
                 }
@@ -135,7 +139,7 @@ public class NewOrderMenu extends FastInv implements Listener {
                 slots.add(Integer.parseInt(part));
             }
         }
-        
+
         return slots;
     }
 
@@ -227,7 +231,7 @@ public class NewOrderMenu extends FastInv implements Listener {
             String name = ColorUtil.hexColor(confirmSection.getString("name"));
             double totalPrice = quantity * pricePerItem;
             if (isHighlighted) {
-                if(Settings.HIGHLIGHT_FEE < 0){
+                if (Settings.HIGHLIGHT_FEE < 0) {
                     return;
                 }
                 double feePercentage = Settings.HIGHLIGHT_FEE;
@@ -253,25 +257,25 @@ public class NewOrderMenu extends FastInv implements Listener {
 
         ConfigurationSection highlightSection = itemsSection.getConfigurationSection("highlight");
         if (highlightSection != null) {
-                Material material = Material.valueOf(highlightSection.getString("material"));
-                String name = ColorUtil.hexColor(highlightSection.getString("name"));
-                List<String> lore = highlightSection.getStringList("lore").stream()
-                        .map(line -> line
-                                .replace("%status%", isHighlighted ? LanguageLoader.getMessage("enabled") : LanguageLoader.getMessage("disabled"))
-                                .replace("%fee%", String.format("%.2f", Settings.HIGHLIGHT_FEE)))
-                        .map(ColorUtil::hexColor)
-                        .collect(Collectors.toList());
-                setItem(highlightSection.getInt("slot"),
-                        ItemBuilder.builder().material(material).glow(isHighlighted).lore(lore).displayName(name).build().build()
-                , e -> handleMenuAction("toggle-highlight", e));
+            Material material = Material.valueOf(highlightSection.getString("material"));
+            String name = ColorUtil.hexColor(highlightSection.getString("name"));
+            List<String> lore = highlightSection.getStringList("lore").stream()
+                    .map(line -> line
+                            .replace("%status%", isHighlighted ? LanguageLoader.getMessage("enabled") : LanguageLoader.getMessage("disabled"))
+                            .replace("%fee%", String.format("%.2f", Settings.HIGHLIGHT_FEE)))
+                    .map(ColorUtil::hexColor)
+                    .collect(Collectors.toList());
+            setItem(highlightSection.getInt("slot"),
+                    ItemBuilder.builder().material(material).glow(isHighlighted).lore(lore).displayName(name).build().build()
+                    , e -> handleMenuAction("toggle-highlight", e));
         }
     }
 
-    
+
     private void handleMenuAction(String action, InventoryClickEvent event) {
         HumanEntity humanEntity = event.getWhoClicked();
         if (!(humanEntity instanceof Player player)) return;
-        
+
         switch (action) {
             case "select-item" -> {
                 new ItemSelectMenu(this).open(player);
@@ -286,13 +290,13 @@ public class NewOrderMenu extends FastInv implements Listener {
             }
 
             case "toggle-highlight" -> {
-                if(!humanEntity.hasPermission(Settings.HIGHLIGHT_PERMISSION)){
+                if (!humanEntity.hasPermission(Settings.HIGHLIGHT_PERMISSION)) {
                     player.sendMessage(LanguageLoader.getMessage("no-permission"));
                     NSound.error(player);
                     return;
                 }
                 setHighlighted(!isHighlighted());
-                Bukkit.getScheduler().runTaskLater(plugin , () -> {
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     updateMenuItems();
                     this.open(player);
                 }, 5L);
@@ -304,7 +308,7 @@ public class NewOrderMenu extends FastInv implements Listener {
                     NSound.error(player);
                     return;
                 }
-                
+
                 if (quantity <= 0) {
                     player.sendMessage(LanguageLoader.getMessage("invalid-quantity"));
                     NSound.error(player);
@@ -339,7 +343,8 @@ public class NewOrderMenu extends FastInv implements Listener {
 
         switch (state) {
             case WAITING_FOR_ITEM -> player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("enter-item")));
-            case WAITING_FOR_QUANTITY -> player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("enter-quantity")));
+            case WAITING_FOR_QUANTITY ->
+                    player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("enter-quantity")));
             case WAITING_FOR_PRICE -> player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("enter-price")));
         }
 
@@ -350,16 +355,16 @@ public class NewOrderMenu extends FastInv implements Listener {
             }
         }, 30 * 20L);
     }
-    
+
     @EventHandler
     public void onPlayerChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
         UUID playerId = player.getUniqueId();
-        
+
         if (!playerInputStates.containsKey(playerId)) {
             return;
         }
-        
+
         event.setCancelled(true);
         String message = event.getMessage();
         ChatInputState state = playerInputStates.get(playerId);
@@ -452,7 +457,7 @@ public class NewOrderMenu extends FastInv implements Listener {
         HumanEntity entity = event.getPlayer();
         Player player = (Player) entity;
         playerInputStates.remove(player.getUniqueId());
-        if(inputTimeoutTask != null) {
+        if (inputTimeoutTask != null) {
             inputTimeoutTask.cancel();
             inputTimeoutTask = null;
         }

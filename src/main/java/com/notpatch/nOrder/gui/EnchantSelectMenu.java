@@ -76,7 +76,7 @@ public class EnchantSelectMenu extends FastInv {
 
     private void updateEnchantmentItems() {
         for (int i = 10; i < 45; i++) {
-            if(fillerSlots.contains(i)) continue;
+            if (fillerSlots.contains(i)) continue;
             setItem(i, null);
         }
 

@@ -34,8 +34,8 @@ public class DatabaseManager {
     }
 
     public void connect() {
-        if(configuration.getString("database.type").equalsIgnoreCase("mysql")){
-            if(!connectToMySQL()) {
+        if (configuration.getString("database.type").equalsIgnoreCase("mysql")) {
+            if (!connectToMySQL()) {
                 NLogger.warn("Unable to connect to MySQL database, falling back to SQLite.");
                 connectToSQLite();
             }
@@ -153,59 +153,59 @@ public class DatabaseManager {
 
     public void createTables() {
         String createOrderTableMySQL = """
-    CREATE TABLE IF NOT EXISTS orders (
-        order_id VARCHAR(8) NOT NULL PRIMARY KEY,
-        player_id VARCHAR(36) NOT NULL,
-        player_name VARCHAR(16) NOT NULL,
-        material VARCHAR(50) NOT NULL,
-        enchantments TEXT DEFAULT NULL,
-        amount INT NOT NULL,
-        price DOUBLE NOT NULL,
-        delivered INT DEFAULT 0,
-        collected INT DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        expires_at TIMESTAMP NOT NULL,
-        highlight BOOLEAN DEFAULT FALSE,
-        status VARCHAR(20) DEFAULT 'ACTIVE',
-        INDEX idx_expires_at (expires_at)
-    );
-
-    CREATE TABLE IF NOT EXISTS player_stats (
-        player_id VARCHAR(36) NOT NULL PRIMARY KEY,
-        player_name VARCHAR(16) NOT NULL,
-        delivered_items INT DEFAULT 0,
-        collected_items INT DEFAULT 0,
-        total_orders INT DEFAULT 0,
-        total_earnings DOUBLE DEFAULT 0.0
-    )
-    """;
+                CREATE TABLE IF NOT EXISTS orders (
+                    order_id VARCHAR(8) NOT NULL PRIMARY KEY,
+                    player_id VARCHAR(36) NOT NULL,
+                    player_name VARCHAR(16) NOT NULL,
+                    material VARCHAR(50) NOT NULL,
+                    enchantments TEXT DEFAULT NULL,
+                    amount INT NOT NULL,
+                    price DOUBLE NOT NULL,
+                    delivered INT DEFAULT 0,
+                    collected INT DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    expires_at TIMESTAMP NOT NULL,
+                    highlight BOOLEAN DEFAULT FALSE,
+                    status VARCHAR(20) DEFAULT 'ACTIVE',
+                    INDEX idx_expires_at (expires_at)
+                );
+                
+                CREATE TABLE IF NOT EXISTS player_stats (
+                    player_id VARCHAR(36) NOT NULL PRIMARY KEY,
+                    player_name VARCHAR(16) NOT NULL,
+                    delivered_items INT DEFAULT 0,
+                    collected_items INT DEFAULT 0,
+                    total_orders INT DEFAULT 0,
+                    total_earnings DOUBLE DEFAULT 0.0
+                )
+                """;
 
         String createOrderTableSQLite = """
-    CREATE TABLE IF NOT EXISTS orders (
-        order_id VARCHAR(8) NOT NULL PRIMARY KEY,
-        player_id VARCHAR(36) NOT NULL,
-        player_name VARCHAR(16) NOT NULL,
-        material VARCHAR(50) NOT NULL,
-        enchantments TEXT DEFAULT NULL,
-        amount INT NOT NULL,
-        price DOUBLE NOT NULL,
-        delivered INT DEFAULT 0,
-        collected INT DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        expires_at TIMESTAMP NOT NULL,
-        highlight BOOLEAN DEFAULT FALSE,
-        status VARCHAR(20) DEFAULT 'ACTIVE'
-    );
-
-    CREATE TABLE IF NOT EXISTS player_stats (
-        player_id VARCHAR(36) NOT NULL PRIMARY KEY,
-        player_name VARCHAR(16) NOT NULL,
-        delivered_items INT DEFAULT 0,
-        collected_items INT DEFAULT 0,
-        total_orders INT DEFAULT 0,
-        total_earnings DOUBLE DEFAULT 0.0
-    )
-    """;
+                CREATE TABLE IF NOT EXISTS orders (
+                    order_id VARCHAR(8) NOT NULL PRIMARY KEY,
+                    player_id VARCHAR(36) NOT NULL,
+                    player_name VARCHAR(16) NOT NULL,
+                    material VARCHAR(50) NOT NULL,
+                    enchantments TEXT DEFAULT NULL,
+                    amount INT NOT NULL,
+                    price DOUBLE NOT NULL,
+                    delivered INT DEFAULT 0,
+                    collected INT DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    expires_at TIMESTAMP NOT NULL,
+                    highlight BOOLEAN DEFAULT FALSE,
+                    status VARCHAR(20) DEFAULT 'ACTIVE'
+                );
+                
+                CREATE TABLE IF NOT EXISTS player_stats (
+                    player_id VARCHAR(36) NOT NULL PRIMARY KEY,
+                    player_name VARCHAR(16) NOT NULL,
+                    delivered_items INT DEFAULT 0,
+                    collected_items INT DEFAULT 0,
+                    total_orders INT DEFAULT 0,
+                    total_earnings DOUBLE DEFAULT 0.0
+                )
+                """;
 
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
@@ -226,8 +226,6 @@ public class DatabaseManager {
             NLogger.error("Failed to create orders table: " + e.getMessage());
         }
     }
-
-
 
 
 }

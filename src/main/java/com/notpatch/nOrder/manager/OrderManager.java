@@ -102,18 +102,18 @@ public class OrderManager {
 
     public void saveOrders() {
         String sql = """
-            INSERT INTO orders (order_id, player_id, player_name, material, enchantments, amount, price, delivered, collected, created_at, expires_at, highlight, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-            delivered = VALUES(delivered),
-            collected = VALUES(collected)
-            """;
+                INSERT INTO orders (order_id, player_id, player_name, material, enchantments, amount, price, delivered, collected, created_at, expires_at, highlight, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                delivered = VALUES(delivered),
+                collected = VALUES(collected)
+                """;
 
         if (main.getDatabaseManager().isUsingSQLite()) {
             sql = """
-                INSERT OR REPLACE INTO orders (order_id, player_id, player_name, material, enchantments, amount, price, delivered, collected, created_at, expires_at, highlight, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """;
+                    INSERT OR REPLACE INTO orders (order_id, player_id, player_name, material, enchantments, amount, price, delivered, collected, created_at, expires_at, highlight, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """;
         }
 
         try (Connection conn = main.getDatabaseManager().getDataSource().getConnection();
@@ -223,13 +223,13 @@ public class OrderManager {
     public void addOrder(Order order) {
         double totalPrice = order.getPrice() * order.getAmount();
         OfflinePlayer offlinePlayer = main.getServer().getOfflinePlayer(order.getPlayerId());
-        if(PlayerUtil.getPlayer(offlinePlayer) == null){
+        if (PlayerUtil.getPlayer(offlinePlayer) == null) {
             return;
         }
 
         Player player = PlayerUtil.getPlayer(offlinePlayer);
 
-        if(PlayerUtil.isPlayerAdmin(player)){
+        if (PlayerUtil.isPlayerAdmin(player)) {
             getPlayerOrders(order.getPlayerId()).add(order);
             player.sendMessage(LanguageLoader.getMessage("order-created")
                     .replace("%material%", order.getMaterial().name())
@@ -244,20 +244,20 @@ public class OrderManager {
 
         int playerOrderLimit = PlayerUtil.getPlayerOrderLimit(player);
 
-        if(getPlayerOrderCount(order.getPlayerId()) >= playerOrderLimit){
+        if (getPlayerOrderCount(order.getPlayerId()) >= playerOrderLimit) {
             player.sendMessage(LanguageLoader.getMessage("order-limit-reached")
-            .replace("%limit%", String.valueOf(playerOrderLimit)));
+                    .replace("%limit%", String.valueOf(playerOrderLimit)));
             NSound.error(player);
             return;
         }
 
-        if(totalPrice < 1){
+        if (totalPrice < 1) {
             player.sendMessage(LanguageLoader.getMessage("price-too-low"));
             NSound.error(player);
             return;
         }
 
-        if(main.getEconomy().getBalance(offlinePlayer) < totalPrice){
+        if (main.getEconomy().getBalance(offlinePlayer) < totalPrice) {
             player.sendMessage(LanguageLoader.getMessage("not-enough-money"));
             NSound.error(player);
             return;
@@ -266,10 +266,10 @@ public class OrderManager {
         main.getEconomy().withdrawPlayer(offlinePlayer, totalPrice);
         getPlayerOrders(order.getPlayerId()).add(order);
         player.sendMessage(LanguageLoader.getMessage("order-created")
-        .replace("%material%", order.getMaterial().name())
-        .replace("%amount%", String.valueOf(order.getAmount()))
-        .replace("%total_price%", String.format("%.2f", totalPrice))
-        .replace("%price%", String.valueOf(order.getPrice())));
+                .replace("%material%", order.getMaterial().name())
+                .replace("%amount%", String.valueOf(order.getAmount()))
+                .replace("%total_price%", String.format("%.2f", totalPrice))
+                .replace("%price%", String.valueOf(order.getPrice())));
         order.setStatus(OrderStatus.ACTIVE);
         main.getPlayerStatsManager().getStatistics(order.getPlayerId()).addTotalOrders(1);
         NSound.success(player);
@@ -285,7 +285,7 @@ public class OrderManager {
                         .replace("%player%", order.getPlayerName()));
                 embed.setTitle(embed.getTitle().replace("%material%", order.getMaterial().name()));
                 embed.setThumbnail("https://mc.nerothe.com/img/1.21.8/minecraft_" + order.getMaterial().name().toLowerCase() + ".png");
-                embed.setAuthor(player.getName(), null, "https://api.mcheads.org/head/" +  player.getName());
+                embed.setAuthor(player.getName(), null, "https://api.mcheads.org/head/" + player.getName());
                 for (int i = 0; i < embed.getFields().size(); i++) {
                     DiscordWebhook.EmbedObject.Field field = embed.getFields().get(i);
                     String value = field.getValue()
@@ -312,8 +312,8 @@ public class OrderManager {
         }
     }
 
-    public Order createRandomOrder(){
-        Order order = new Order(createRandomId(), UUID.randomUUID(), "Random"+createRandomId(), new ItemStack(Settings.availableItems.get(new Random().nextInt(0, Settings.availableItems.size()))), 1, 100, LocalDateTime.now(), LocalDateTime.now().plusDays(1), false);
+    public Order createRandomOrder() {
+        Order order = new Order(createRandomId(), UUID.randomUUID(), "Random" + createRandomId(), new ItemStack(Settings.availableItems.get(new Random().nextInt(0, Settings.availableItems.size()))), 1, 100, LocalDateTime.now(), LocalDateTime.now().plusDays(1), false);
         order.setStatus(OrderStatus.ACTIVE);
 
         getPlayerOrders(order.getPlayerId()).add(order);
@@ -342,9 +342,9 @@ public class OrderManager {
                 .collect(Collectors.joining(", "));
     }
 
-    public void cancelOrder(Order order){
+    public void cancelOrder(Order order) {
         OfflinePlayer offlinePlayer = main.getServer().getOfflinePlayer(order.getPlayerId());
-        if(PlayerUtil.getPlayer(offlinePlayer) == null){
+        if (PlayerUtil.getPlayer(offlinePlayer) == null) {
             return;
         }
         Player player = PlayerUtil.getPlayer(offlinePlayer);
@@ -353,9 +353,9 @@ public class OrderManager {
         main.getEconomy().depositPlayer(offlinePlayer, refundAmount);
         removeOrder(order);
         player.sendMessage(LanguageLoader.getMessage("order-cancelled")
-        .replace("%material%", order.getMaterial().name())
-        .replace("%amount%", String.valueOf(order.getAmount() - order.getDelivered()))
-        .replace("%refund_amount%", String.format("%.2f", refundAmount)));
+                .replace("%material%", order.getMaterial().name())
+                .replace("%amount%", String.valueOf(order.getAmount() - order.getDelivered()))
+                .replace("%refund_amount%", String.format("%.2f", refundAmount)));
         NSound.success(player);
     }
 
@@ -410,7 +410,7 @@ public class OrderManager {
                         double pendingCollection = order.getDelivered() - order.getCollected();
 
                         double refundAmount = undelivered + pendingCollection;
-                        if(refundAmount > 0){
+                        if (refundAmount > 0) {
                             OfflinePlayer player = main.getServer().getOfflinePlayer(order.getPlayerId());
                             main.getEconomy().depositPlayer(player, refundAmount);
                         }

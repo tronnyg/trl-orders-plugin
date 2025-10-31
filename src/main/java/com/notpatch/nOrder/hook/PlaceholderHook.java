@@ -20,7 +20,7 @@ public class PlaceholderHook extends PlaceholderExpansion {
 
     private final DateTimeFormatter dateTimeFormatter;
 
-    public PlaceholderHook(NOrder main){
+    public PlaceholderHook(NOrder main) {
         this.main = main;
         this.orderManager = main.getOrderManager();
         this.playerStatsManager = main.getPlayerStatsManager();
@@ -64,13 +64,27 @@ public class PlaceholderHook extends PlaceholderExpansion {
             String orderId = parts[1];
             String field = parts[2];
             switch (field) {
-                case "material" -> { return getOrderMaterial(orderId); }
-                case "amount" -> { return getOrderAmount(orderId); }
-                case "price" -> { return getOrderPrice(orderId); }
-                case "buyer" -> { return getOrderBuyer(orderId); }
-                case "status" -> { return getOrderStatus(orderId); }
-                case "createDate" -> { return getOrderCreateDate(orderId); }
-                case "expirationDate" -> { return getOrderExpirationDate(orderId); }
+                case "material" -> {
+                    return getOrderMaterial(orderId);
+                }
+                case "amount" -> {
+                    return getOrderAmount(orderId);
+                }
+                case "price" -> {
+                    return getOrderPrice(orderId);
+                }
+                case "buyer" -> {
+                    return getOrderBuyer(orderId);
+                }
+                case "status" -> {
+                    return getOrderStatus(orderId);
+                }
+                case "createDate" -> {
+                    return getOrderCreateDate(orderId);
+                }
+                case "expirationDate" -> {
+                    return getOrderExpirationDate(orderId);
+                }
             }
         }
 
@@ -79,10 +93,18 @@ public class PlaceholderHook extends PlaceholderExpansion {
             String playerName = parts[1];
             String field = parts[2];
             switch (field) {
-                case "totalOrders" -> { return getPlayerTotalOrders(playerName); }
-                case "totalEarnings" -> { return getPlayerTotalEarnings(playerName); }
-                case "totalDelivered" -> { return getPlayerTotalDeliveredItems(playerName); }
-                case "totalCollected" -> { return getPlayerTotalCollectedItems(playerName); }
+                case "totalOrders" -> {
+                    return getPlayerTotalOrders(playerName);
+                }
+                case "totalEarnings" -> {
+                    return getPlayerTotalEarnings(playerName);
+                }
+                case "totalDelivered" -> {
+                    return getPlayerTotalDeliveredItems(playerName);
+                }
+                case "totalCollected" -> {
+                    return getPlayerTotalCollectedItems(playerName);
+                }
             }
         }
 
@@ -92,52 +114,59 @@ public class PlaceholderHook extends PlaceholderExpansion {
     private String getOrdersTotal() {
         return String.valueOf(orderManager.getAllOrders().size());
     }
+
     private String getOrderMaterial(String orderId) {
-        if(orderManager.getOrderById(orderId) == null) return "";
+        if (orderManager.getOrderById(orderId) == null) return "";
         return orderManager.getOrderById(orderId).getMaterial().name();
     }
 
     private String getOrderAmount(String orderId) {
-        if(orderManager.getOrderById(orderId) == null) return "";
+        if (orderManager.getOrderById(orderId) == null) return "";
         return String.valueOf(orderManager.getOrderById(orderId).getAmount());
     }
+
     private String getOrderPrice(String orderId) {
-        if(orderManager.getOrderById(orderId) == null) return "";
+        if (orderManager.getOrderById(orderId) == null) return "";
         return String.valueOf(orderManager.getOrderById(orderId).getPrice());
     }
+
     private String getOrderBuyer(String orderId) {
-        if(orderManager.getOrderById(orderId) == null) return "";
+        if (orderManager.getOrderById(orderId) == null) return "";
         return String.valueOf(orderManager.getOrderById(orderId).getPlayerName());
     }
+
     private String getOrderStatus(String orderId) {
-        if(orderManager.getOrderById(orderId) == null) return "";
+        if (orderManager.getOrderById(orderId) == null) return "";
         return orderManager.getOrderById(orderId).getStatus().name();
     }
+
     private String getOrderCreateDate(String orderId) {
-        if(orderManager.getOrderById(orderId) == null) return "";
+        if (orderManager.getOrderById(orderId) == null) return "";
         return orderManager.getOrderById(orderId).getCreatedAt().format(dateTimeFormatter);
     }
 
     private String getOrderExpirationDate(String orderId) {
-        if(orderManager.getOrderById(orderId) == null) return "";
+        if (orderManager.getOrderById(orderId) == null) return "";
         return orderManager.getOrderById(orderId).getExpirationDate().format(dateTimeFormatter);
     }
 
     private String getPlayerTotalOrders(String playerName) {
-        if(playerStatsManager.getStatisticsByName(playerName) == null) return "0";
+        if (playerStatsManager.getStatisticsByName(playerName) == null) return "0";
         return playerStatsManager.getStatisticsByName(playerName).getTotalOrders() + "";
     }
 
     private String getPlayerTotalEarnings(String playerName) {
-        if(playerStatsManager.getStatisticsByName(playerName) == null) return "0";
+        if (playerStatsManager.getStatisticsByName(playerName) == null) return "0";
         return playerStatsManager.getStatisticsByName(playerName).getTotalEarnings() + "";
     }
+
     private String getPlayerTotalDeliveredItems(String playerName) {
-        if(playerStatsManager.getStatisticsByName(playerName) == null) return "0";
+        if (playerStatsManager.getStatisticsByName(playerName) == null) return "0";
         return playerStatsManager.getStatisticsByName(playerName).getDeliveredItems() + "";
     }
+
     private String getPlayerTotalCollectedItems(String playerName) {
-        if(playerStatsManager.getStatisticsByName(playerName) == null) return "0";
+        if (playerStatsManager.getStatisticsByName(playerName) == null) return "0";
         return playerStatsManager.getStatisticsByName(playerName).getCollectedItems() + "";
     }
 }

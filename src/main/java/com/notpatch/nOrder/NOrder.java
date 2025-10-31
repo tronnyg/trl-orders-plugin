@@ -60,12 +60,12 @@ public final class NOrder extends JavaPlugin {
         compatibility.checkBukkit("Paper")
                 .checkVersion("1.21.4")
                 .checkPlugin("PlaceholderAPI", false)
-                .onSuccess(()->{
+                .onSuccess(() -> {
                     new PlaceholderHook(this).register();
 
                 })
                 .checkPlugin("Vault", true)
-                .onSuccess(()->{
+                .onSuccess(() -> {
                     if (NLib.getInstance().getPlugin().getServer().getPluginManager().getPlugin("Vault") == null) {
                         return;
                     }
@@ -113,10 +113,10 @@ public final class NOrder extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if(orderManager != null) orderManager.saveOrders();
-        if(playerStatsManager != null) playerStatsManager.saveStatistics();
-        if(databaseManager != null) databaseManager.disconnect();
-        if(configurationManager != null) configurationManager.saveConfigurations();
+        if (orderManager != null) orderManager.saveOrders();
+        if (playerStatsManager != null) playerStatsManager.saveStatistics();
+        if (databaseManager != null) databaseManager.disconnect();
+        if (configurationManager != null) configurationManager.saveConfigurations();
     }
 
 }

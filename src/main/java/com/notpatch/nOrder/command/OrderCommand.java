@@ -21,30 +21,30 @@ public class OrderCommand implements BasicCommand {
     @Override
     public void execute(CommandSourceStack commandSourceStack, String[] args) {
         Entity executor = commandSourceStack.getExecutor();
-        if(!(executor instanceof Player player)) return;
+        if (!(executor instanceof Player player)) return;
 
-        if(args.length > 0){
+        if (args.length > 0) {
             String[] split = args[0].split(":");
-            if(split.length == 2){
-                if(split[0].equalsIgnoreCase("id")){
+            if (split.length == 2) {
+                if (split[0].equalsIgnoreCase("id")) {
                     Order order = NOrder.getInstance().getOrderManager().getOrderById(split[1]);
-                    if(order != null){
+                    if (order != null) {
                         new OrderDetailsMenu(order).open(player);
                         NSound.click(player);
                         return;
                     }
                 }
-                if(split[0].equalsIgnoreCase("player")){
+                if (split[0].equalsIgnoreCase("player")) {
                     List<Order> orders = NOrder.getInstance().getOrderManager().getPlayerOrders(split[1]);
-                    if(orders != null){
+                    if (orders != null) {
                         new MainOrderMenu(orders).open(player);
                         NSound.click(player);
                         return;
                     }
                 }
-                if(split[0].equalsIgnoreCase("material")){
+                if (split[0].equalsIgnoreCase("material")) {
                     List<Order> orders = NOrder.getInstance().getOrderManager().getOrdersByMaterial(split[1]);
-                    if(orders != null){
+                    if (orders != null) {
                         new MainOrderMenu(orders).open(player);
                         NSound.click(player);
                         return;
@@ -63,8 +63,7 @@ public class OrderCommand implements BasicCommand {
         List<String> suggestions = List.of("id:", "player:", "item:");
         if (args.length == 0 || (args.length == 1 && args[0].isEmpty())) {
             return suggestions;
-        }
-        else if (args.length == 1) {
+        } else if (args.length == 1) {
             String input = args[0].toLowerCase();
             return suggestions.stream()
                     .filter(suggestion -> suggestion.toLowerCase().startsWith(input))
@@ -76,7 +75,7 @@ public class OrderCommand implements BasicCommand {
 
     @Override
     public boolean canUse(CommandSender sender) {
-        if(sender instanceof Player){
+        if (sender instanceof Player) {
             return sender.hasPermission(Settings.ORDER_MENU_PERMISSION);
         }
         return false;

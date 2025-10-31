@@ -31,14 +31,14 @@ public class Order {
 
     public void addDelivered(int quantity) {
         this.delivered += quantity;
-        if(delivered > amount){
+        if (delivered > amount) {
             delivered = amount;
         }
     }
 
     public void addCollected(int quantity) {
         this.collected += quantity;
-        if(collected > delivered){
+        if (collected > delivered) {
             collected = delivered;
         }
     }

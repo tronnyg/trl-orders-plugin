@@ -21,7 +21,8 @@ import java.util.*;
 public class DiscordWebhook {
 
     private final String url;
-    @Setter@Getter
+    @Setter
+    @Getter
     private String content;
     @Setter
     private String username;

@@ -32,7 +32,8 @@ import java.util.*;
 
 public class MainOrderMenu extends FastInv {
 
-    @Getter @Setter
+    @Getter
+    @Setter
     private int currentPage = 1;
     private final List<Integer> orderSlots;
     private final int itemsPerPage;
@@ -178,12 +179,12 @@ public class MainOrderMenu extends FastInv {
         } catch (IllegalArgumentException e) {
             material = Material.PAPER;
         }
-        
+
         ItemStack itemStack = order.getItem();
         Map<Enchantment, Integer> enchantments = new HashMap<>();
-        if(itemStack != null){
+        if (itemStack != null) {
             ItemMeta meta = itemStack.getItemMeta();
-            if(meta != null){
+            if (meta != null) {
                 enchantments = meta.getEnchants();
             }
         }
@@ -240,7 +241,7 @@ public class MainOrderMenu extends FastInv {
 
     private void handleOrderClick(Order order, HumanEntity player) {
         player.closeInventory();
-        if(order.getPlayerId() == player.getUniqueId() || order.getPlayerName().equalsIgnoreCase(player.getName())){
+        if (order.getPlayerId() == player.getUniqueId() || order.getPlayerName().equalsIgnoreCase(player.getName())) {
             Bukkit.getScheduler().runTask(NOrder.getInstance(), () -> {
                 new OrderTakeMenu(order).open((Player) player);
             });

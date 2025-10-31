@@ -30,19 +30,19 @@ public class OrderAdminCommand implements BasicCommand {
             return;
         }
 
-        if(args.length == 1){
-            if(args[0].equalsIgnoreCase("reload")){
+        if (args.length == 1) {
+            if (args[0].equalsIgnoreCase("reload")) {
                 reloadConfigurations(commandSourceStack.getExecutor());
                 NSound.success((Player) commandSourceStack.getExecutor());
             }
         }
 
 
-        if(args.length == 2){
-            if(args[0].equalsIgnoreCase("info")){
+        if (args.length == 2) {
+            if (args[0].equalsIgnoreCase("info")) {
                 String orderId = args[1];
                 Order order = NOrder.getInstance().getOrderManager().getOrderById(orderId);
-                if(order != null){
+                if (order != null) {
                     int amount = order.getAmount();
                     double price = order.getPrice();
                     String status = order.getStatus().name();
@@ -62,21 +62,21 @@ public class OrderAdminCommand implements BasicCommand {
 
                     );
                     return;
-                }else{
+                } else {
                     commandSourceStack.getExecutor().sendMessage(LanguageLoader.getMessage("order-not-found").replace("%id%", orderId));
                     NSound.error((Player) commandSourceStack.getExecutor());
                     return;
                 }
             }
-            if(args[0].equalsIgnoreCase("delete")){
+            if (args[0].equalsIgnoreCase("delete")) {
                 String orderId = args[1];
                 Order order = NOrder.getInstance().getOrderManager().getOrderById(orderId);
-                if(order != null){
+                if (order != null) {
                     NOrder.getInstance().getOrderManager().removeOrder(order);
                     commandSourceStack.getExecutor().sendMessage(LanguageLoader.getMessage("order-deleted").replace("%id%", orderId));
                     NSound.success((Player) commandSourceStack.getExecutor());
                     return;
-                }else{
+                } else {
                     commandSourceStack.getExecutor().sendMessage(LanguageLoader.getMessage("order-not-found").replace("%id%", orderId));
                     NSound.error((Player) commandSourceStack.getExecutor());
                     return;
@@ -93,15 +93,13 @@ public class OrderAdminCommand implements BasicCommand {
 
         if (args.length == 0) {
             return suggestions;
-        }
-        else if (args.length == 1) {
+        } else if (args.length == 1) {
             String input = args[0].toLowerCase();
             return suggestions.stream()
                     .filter(suggestion -> suggestion.toLowerCase().startsWith(input))
                     .collect(Collectors.toList());
-        }
-        else if (args.length == 2) {
-            if(args[0].equalsIgnoreCase("info") || args[0].equalsIgnoreCase("delete")){
+        } else if (args.length == 2) {
+            if (args[0].equalsIgnoreCase("info") || args[0].equalsIgnoreCase("delete")) {
                 String input = args[1].toLowerCase();
                 return NOrder.getInstance().getOrderManager().getAllOrders().stream()
                         .map(Order::getId)
@@ -122,7 +120,7 @@ public class OrderAdminCommand implements BasicCommand {
         return Settings.ORDER_ADMIN_PERMISSION;
     }
 
-    private void reloadConfigurations(Entity executor){
+    private void reloadConfigurations(Entity executor) {
         NOrder main = NOrder.getInstance();
         main.reloadConfig();
         main.saveDefaultConfig();

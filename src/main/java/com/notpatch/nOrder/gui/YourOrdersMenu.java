@@ -30,7 +30,8 @@ import java.util.List;
 
 public class YourOrdersMenu extends FastInv {
 
-    @Getter @Setter
+    @Getter
+    @Setter
     private int currentPage = 1;
     private final List<Integer> orderSlots;
     private final int itemsPerPage;
@@ -186,7 +187,7 @@ public class YourOrdersMenu extends FastInv {
     }
 
     private void handleOrderClick(Order order, HumanEntity player) {
-        if(order.getStatus() == OrderStatus.ARCHIVED)
+        if (order.getStatus() == OrderStatus.ARCHIVED)
             return;
         player.closeInventory();
         Bukkit.getScheduler().runTask(NOrder.getInstance(), () -> {

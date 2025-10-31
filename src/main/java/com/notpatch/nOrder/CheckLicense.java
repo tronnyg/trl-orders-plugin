@@ -35,8 +35,8 @@ public class CheckLicense {
                     Bukkit.getConsoleSender().sendMessage("Status: " + status + ", Buyer: " + buyer);
                 }
             } else if ("INVALID".equals(status)) {
-                Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',"&fLicense &c " + status + " &7&o(" + licenseKey + ")"));
-                Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&',"&fInfo: &7" + message));
+                Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&fLicense &c " + status + " &7&o(" + licenseKey + ")"));
+                Bukkit.getConsoleSender().sendMessage(ChatColor.translateAlternateColorCodes('&', "&fInfo: &7" + message));
                 Bukkit.getPluginManager().disablePlugin(NOrder.getInstance());
             }
         } catch (Exception e) {

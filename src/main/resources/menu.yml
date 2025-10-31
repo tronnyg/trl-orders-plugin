@@ -3,10 +3,10 @@ main-order-menu:
   size: 54
   items:
     filler:
-      slots: [0-8,9,17,18,26,27,35,36,44]
+      slots: [ 0-8,9,17,18,26,27,35,36,44 ]
       material: GRAY_STAINED_GLASS_PANE
       name: " "
-      lore: []
+      lore: [ ]
     new-order:
       slot: 49
       material: MAP
@@ -73,7 +73,7 @@ main-order-menu:
       - ""
     action: view-order
 
-  order-slots: [10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43]
+  order-slots: [ 10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43 ]
 
   pagination:
     items-per-page: 28
@@ -145,10 +145,10 @@ your-orders-menu:
   size: 54
   items:
     filler:
-      slots: [0-8,9,17,18,26,27,35,36,44]
+      slots: [ 0-8,9,17,18,26,27,35,36,44 ]
       material: GRAY_STAINED_GLASS_PANE
       name: " "
-      lore: []
+      lore: [ ]
     back:
       slot: 49
       material: BARRIER
@@ -196,7 +196,7 @@ your-orders-menu:
       - '&7%time_remaining%'
       - ""
 
-  order-slots: [10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34]
+  order-slots: [ 10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34 ]
 
   pagination:
     items-per-page: 21
@@ -206,10 +206,10 @@ order-take-menu:
   size: 54
   items:
     filler:
-      slots: [0-8,9,17,18,26,27,35,36,44,45-53]
+      slots: [ 0-8,9,17,18,26,27,35,36,44,45-53 ]
       material: GRAY_STAINED_GLASS_PANE
       name: " "
-      lore: []
+      lore: [ ]
     back:
       slot: 49
       material: BARRIER
@@ -229,17 +229,17 @@ order-take-menu:
         - "&7Q/Drop: &fDrop item"
         - ""
 
-  delivery-slots: [10,11,12,13,14,15,16,19,20,21,22,23,24,25,28,29,30,31,32,33,34]
+  delivery-slots: [ 10,11,12,13,14,15,16,19,20,21,22,23,24,25,28,29,30,31,32,33,34 ]
 
 item-select-menu:
   title: "&lSelect Item"
   size: 54
   items:
     filler:
-      slots: [0-8,9,17,18,26,27,35,36,44,45-53]
+      slots: [ 0-8,9,17,18,26,27,35,36,44,45-53 ]
       material: GRAY_STAINED_GLASS_PANE
       name: " "
-      lore: []
+      lore: [ ]
     search:
       slot: 49
       material: OAK_SIGN
@@ -284,7 +284,7 @@ item-select-menu:
         - "&7Click to select this item"
         - ""
 
-  item-slots: [10,11,12,13,14,15,16,19,20,21,22,23,24,25,28,29,30,31,32,33,34,37,38,39,40,41,42,43]
+  item-slots: [ 10,11,12,13,14,15,16,19,20,21,22,23,24,25,28,29,30,31,32,33,34,37,38,39,40,41,42,43 ]
   pagination:
     items-per-page: 28
 
@@ -293,10 +293,10 @@ enchant-select-menu:
   size: 54
   items:
     filler:
-      slots: [0-8,9,17,18,26,27,35,36,44,45-53]
+      slots: [ 0-8,9,17,18,26,27,35,36,44,45-53 ]
       material: GRAY_STAINED_GLASS_PANE
       name: " "
-      lore: []
+      lore: [ ]
     confirm:
       slot: 49
       material: LIME_STAINED_GLASS_PANE
