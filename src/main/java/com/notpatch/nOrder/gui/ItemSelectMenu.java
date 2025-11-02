@@ -7,7 +7,6 @@ import com.notpatch.nlib.builder.ItemBuilder;
 import com.notpatch.nlib.effect.NSound;
 import com.notpatch.nlib.fastinv.FastInv;
 import com.notpatch.nlib.util.ColorUtil;
-import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.Configuration;
@@ -17,10 +16,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class ItemSelectMenu extends FastInv {
+
+    private final NOrder main;
 
     private final NewOrderMenu parentMenu;
     private int currentPage = 1;
@@ -34,7 +37,8 @@ public class ItemSelectMenu extends FastInv {
                 ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("item-select-menu.title")));
 
         this.parentMenu = parentMenu;
-        Configuration config = NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration();
+        main = NOrder.getInstance();
+        Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
 
         this.availableItems = Settings.availableItems;
 
@@ -50,7 +54,7 @@ public class ItemSelectMenu extends FastInv {
     }
 
     private void loadMenuItems() {
-        Configuration config = NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration();
+        Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
         ConfigurationSection itemsSection = config.getConfigurationSection("item-select-menu.items");
 
         if (itemsSection != null) {
@@ -109,7 +113,7 @@ public class ItemSelectMenu extends FastInv {
     }
 
     private void updateNavigationButtons(int totalItems) {
-        Configuration config = NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration();
+        Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
         ConfigurationSection itemsSection = config.getConfigurationSection("item-select-menu.items");
 
         if (itemsSection != null) {
@@ -129,7 +133,6 @@ public class ItemSelectMenu extends FastInv {
                 }
             }
 
-            // Next page button
             ConfigurationSection nextSection = itemsSection.getConfigurationSection("next-page");
             if (nextSection != null) {
                 ItemStack nextButton = ItemBuilder.getItemFromSection(nextSection);
@@ -149,7 +152,7 @@ public class ItemSelectMenu extends FastInv {
     }
 
     private ItemStack createItemButton(Material material) {
-        Configuration config = NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration();
+        Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
         ConfigurationSection template = config.getConfigurationSection("item-select-menu.items.select-item-template");
 
         if (template != null) {
@@ -169,7 +172,6 @@ public class ItemSelectMenu extends FastInv {
                     .build();
         }
 
-        // Fallback eğer template bulunamazsa
         return ItemBuilder.builder()
                 .material(material)
                 .displayName(ColorUtil.hexColor("&f" + formatMaterialName(material)))
@@ -195,7 +197,7 @@ public class ItemSelectMenu extends FastInv {
             case "search-item" -> {
                 player.closeInventory();
                 player.sendMessage(LanguageLoader.getMessage("enter-item"));
-                NOrder.getInstance().getChatInputManager().setAwaitingInput(player, input -> {
+                main.getChatInputManager().setAwaitingInput(player, input -> {
                     searchQuery = input;
                     Bukkit.getScheduler().runTask(NOrder.getInstance(), () -> {
                         updateItems();

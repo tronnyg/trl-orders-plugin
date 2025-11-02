@@ -34,6 +34,11 @@ public class OrderManager {
     }
 
     public void loadOrders() {
+        if (!main.getDatabaseManager().isConnectionValid()) {
+            NLogger.error("Database connection is null. Cannot load orders.");
+            return;
+        }
+
         try (Connection conn = main.getDatabaseManager().getDataSource().getConnection();
              PreparedStatement stmt = conn.prepareStatement("SELECT * FROM orders")) {
 
@@ -101,6 +106,10 @@ public class OrderManager {
 
 
     public void saveOrders() {
+        if (!main.getDatabaseManager().isConnectionValid()) {
+            NLogger.error("Database connection is null. Cannot save orders.");
+            return;
+        }
         String sql = """
                 INSERT INTO orders (order_id, player_id, player_name, material, enchantments, amount, price, delivered, collected, created_at, expires_at, highlight, status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -397,15 +406,10 @@ public class OrderManager {
     public void cleanExpiredOrders() {
         LocalDateTime now = LocalDateTime.now();
         for (List<Order> orders : new ArrayList<>(ordersByPlayer.values())) {
-            orders.removeIf(order -> {
+            orders.forEach(order -> {
                 if (order.isExpired()) {
+                    order.setStatus(OrderStatus.COMPLETED);
                     if (order.getDelivered() < order.getAmount()) {
-                        // Total 1000 | Toplam 1000
-                        // Delivered 500 | 500 adet teslim edilmiş
-
-                        // Collected 200 | 200 adet teslim alınmış
-                        // Pending Collection 300 | 300 adet teslim alınmamış
-
                         double undelivered = Math.max(0, order.getAmount() - order.getDelivered());
                         double pendingCollection = order.getDelivered() - order.getCollected();
 
@@ -416,9 +420,7 @@ public class OrderManager {
                         }
 
                     }
-                    return true;
                 }
-                return false;
             });
         }
 

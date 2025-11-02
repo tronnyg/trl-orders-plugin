@@ -19,6 +19,8 @@ import java.util.stream.Collectors;
 
 public class EnchantSelectMenu extends FastInv {
 
+    private final NOrder main;
+
     private final NewOrderMenu parentMenu;
     private final Material selectedMaterial;
     private final Map<Enchantment, Integer> selectedEnchants = new HashMap<>();
@@ -29,10 +31,10 @@ public class EnchantSelectMenu extends FastInv {
     public EnchantSelectMenu(NewOrderMenu parentMenu, Material material) {
         super(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getInt("enchant-select-menu.size"),
                 ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("enchant-select-menu.title")));
-
+        main = NOrder.getInstance();
         this.parentMenu = parentMenu;
         this.selectedMaterial = material;
-        this.config = NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration();
+        this.config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
 
         ItemStack item = new ItemStack(material);
         this.availableEnchants = Arrays.stream(Enchantment.values())
@@ -45,7 +47,7 @@ public class EnchantSelectMenu extends FastInv {
     }
 
     private void loadMenuItems() {
-        Configuration config = NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration();
+        Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
         ConfigurationSection itemsSection = config.getConfigurationSection("enchant-select-menu.items");
 
         if (itemsSection != null) {

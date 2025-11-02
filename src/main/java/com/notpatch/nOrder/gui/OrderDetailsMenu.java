@@ -7,7 +7,6 @@ import com.notpatch.nOrder.model.OrderStatus;
 import com.notpatch.nlib.effect.NSound;
 import com.notpatch.nlib.fastinv.FastInv;
 import com.notpatch.nlib.util.ColorUtil;
-import com.notpatch.nlib.util.NLogger;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.enchantments.Enchantment;
@@ -24,6 +23,8 @@ import java.util.Map;
 
 public class OrderDetailsMenu extends FastInv {
 
+    private final NOrder main;
+
     private final Order order;
 
     @Getter
@@ -34,7 +35,7 @@ public class OrderDetailsMenu extends FastInv {
 
     public OrderDetailsMenu(Order order) {
         super(54, ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("order-details-menu.title")));
-
+        main = NOrder.getInstance();
         this.order = order;
 
         Bukkit.getScheduler().runTask(NOrder.getInstance(), () -> {
@@ -107,10 +108,10 @@ public class OrderDetailsMenu extends FastInv {
                 player.sendMessage(LanguageLoader.getMessage("delivery-success").replace("%material%", order.getMaterial().name()).replace("%amount%", totalAmount + ""));
                 player.sendMessage(LanguageLoader.getMessage("delivery-earnings").replace("%amount%", String.format("%.2f", earning)));
 
-                NOrder.getInstance().getEconomy().depositPlayer(player, earning);
-                NOrder.getInstance().getPlayerStatsManager().getStatistics(player.getUniqueId()).addDeliveredItems(totalAmount);
-                NOrder.getInstance().getPlayerStatsManager().getStatistics(player.getUniqueId()).addTotalEarnings(earning);
-                NOrder.getInstance().getPlayerStatsManager().getStatistics(order.getPlayerId()).addCollectedItems(totalAmount);
+                main.getEconomy().depositPlayer(player, earning);
+                main.getPlayerStatsManager().getStatistics(player.getUniqueId()).addDeliveredItems(totalAmount);
+                main.getPlayerStatsManager().getStatistics(player.getUniqueId()).addTotalEarnings(earning);
+                main.getPlayerStatsManager().getStatistics(order.getPlayerId()).addCollectedItems(totalAmount);
 
                 NSound.success(player);
 

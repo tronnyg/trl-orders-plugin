@@ -13,7 +13,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class DatabaseManager {
 
@@ -224,6 +223,18 @@ public class DatabaseManager {
             NLogger.info("Created orders table successfully.");
         } catch (SQLException e) {
             NLogger.error("Failed to create orders table: " + e.getMessage());
+        }
+    }
+
+    public boolean isConnectionValid() {
+        if (dataSource == null) {
+            return false;
+        }
+
+        try (Connection conn = dataSource.getConnection()) {
+            return conn.isValid(1000);
+        } catch (SQLException e) {
+            return false;
         }
     }
 

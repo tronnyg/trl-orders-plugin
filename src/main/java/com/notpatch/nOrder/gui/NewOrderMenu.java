@@ -4,7 +4,6 @@ import com.notpatch.nOrder.LanguageLoader;
 import com.notpatch.nOrder.NOrder;
 import com.notpatch.nOrder.Settings;
 import com.notpatch.nOrder.model.Order;
-import com.notpatch.nOrder.model.OrderStatus;
 import com.notpatch.nOrder.util.PlayerUtil;
 import com.notpatch.nlib.builder.ItemBuilder;
 import com.notpatch.nlib.effect.NSound;
@@ -18,27 +17,23 @@ import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.scheduler.BukkitTask;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class NewOrderMenu extends FastInv implements Listener {
 
-    private final NOrder plugin;
+    private final NOrder main;
     private final Configuration config;
 
     @Getter
-    @Setter
     private ItemStack selectedItem;
 
     @Getter
@@ -53,21 +48,14 @@ public class NewOrderMenu extends FastInv implements Listener {
     @Setter
     private boolean isHighlighted = false;
 
-    private final Map<UUID, ChatInputState> playerInputStates = new HashMap<>();
-    private BukkitTask inputTimeoutTask;
-
-    private enum ChatInputState {
-        NONE, WAITING_FOR_ITEM, WAITING_FOR_QUANTITY, WAITING_FOR_PRICE
-    }
-
     public NewOrderMenu() {
         super(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getInt("new-order-menu.size"),
                 ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("new-order-menu.title")));
 
-        this.plugin = NOrder.getInstance();
-        this.config = plugin.getConfigurationManager().getMenuConfiguration().getConfiguration();
+        this.main = NOrder.getInstance();
+        this.config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
 
-        Bukkit.getPluginManager().registerEvents(this, plugin);
+        Bukkit.getPluginManager().registerEvents(this, main);
         initializeMenu();
     }
 
@@ -141,20 +129,6 @@ public class NewOrderMenu extends FastInv implements Listener {
         }
 
         return slots;
-    }
-
-    private String formatItemName(ItemStack item) {
-        String name = item.getType().name();
-        if (item.getEnchantments().isEmpty()) {
-            return formatMaterialName(name);
-        }
-        return formatMaterialName(name) + " (Enchanted)";
-    }
-
-    private String formatMaterialName(String name) {
-        return Arrays.stream(name.split("_"))
-                .map(s -> s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase())
-                .collect(Collectors.joining(" "));
     }
 
     public void updateMenuItems() {
@@ -282,11 +256,18 @@ public class NewOrderMenu extends FastInv implements Listener {
             }
             case "set-quantity" -> {
                 player.closeInventory();
-                requestChatInput(player, ChatInputState.WAITING_FOR_QUANTITY);
+                player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("enter-quantity")));
+                NOrder.getInstance().getChatInputManager().setAwaitingInput((Player) player, value -> {
+                    processQuantityInput(player, value);
+                });
+
             }
             case "set-price" -> {
                 player.closeInventory();
-                requestChatInput(player, ChatInputState.WAITING_FOR_PRICE);
+                player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("enter-price")));
+                NOrder.getInstance().getChatInputManager().setAwaitingInput((Player) player, value -> {
+                    processPriceInput(player, value);
+                });
             }
 
             case "toggle-highlight" -> {
@@ -296,7 +277,7 @@ public class NewOrderMenu extends FastInv implements Listener {
                     return;
                 }
                 setHighlighted(!isHighlighted());
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                Bukkit.getScheduler().runTaskLater(main, () -> {
                     updateMenuItems();
                     this.open(player);
                 }, 5L);
@@ -323,7 +304,7 @@ public class NewOrderMenu extends FastInv implements Listener {
 
                 LocalDateTime now = LocalDateTime.now();
                 LocalDateTime expireAt = now.plusDays(PlayerUtil.getPlayerOrderExpiration(player));
-                String id = plugin.getOrderManager().createRandomId();
+                String id = main.getOrderManager().createRandomId();
                 Order order = new Order(id, player.getUniqueId(), player.getName(), selectedItem, quantity, pricePerItem, now, expireAt, isHighlighted);
 
                 NOrder.getInstance().getOrderManager().addOrder(order);
@@ -333,96 +314,28 @@ public class NewOrderMenu extends FastInv implements Listener {
         }
     }
 
-
-    private void requestChatInput(Player player, ChatInputState state) {
-        playerInputStates.put(player.getUniqueId(), state);
-
-        if (inputTimeoutTask != null) {
-            inputTimeoutTask.cancel();
-        }
-
-        switch (state) {
-            case WAITING_FOR_ITEM -> player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("enter-item")));
-            case WAITING_FOR_QUANTITY ->
-                    player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("enter-quantity")));
-            case WAITING_FOR_PRICE -> player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("enter-price")));
-        }
-
-        inputTimeoutTask = Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (playerInputStates.containsKey(player.getUniqueId())) {
-                playerInputStates.remove(player.getUniqueId());
-                player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("input-timeout")));
-            }
-        }, 30 * 20L);
-    }
-
-    @EventHandler
-    public void onPlayerChat(AsyncPlayerChatEvent event) {
-        Player player = event.getPlayer();
-        UUID playerId = player.getUniqueId();
-
-        if (!playerInputStates.containsKey(playerId)) {
-            return;
-        }
-
-        event.setCancelled(true);
-        String message = event.getMessage();
-        ChatInputState state = playerInputStates.get(playerId);
-
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            switch (state) {
-                case WAITING_FOR_ITEM -> processItemInput(player, message);
-                case WAITING_FOR_QUANTITY -> processQuantityInput(player, message);
-                case WAITING_FOR_PRICE -> processPriceInput(player, message);
-            }
-        });
-    }
-
-    private void processItemInput(Player player, String input) {
-        try {
-            Material material = Material.valueOf(input.toUpperCase());
-            setSelectedItem(material);
-
-            if (config.getConfigurationSection("new-order-menu.item-prices") != null &&
-                    config.getConfigurationSection("new-order-menu.item-prices").contains(material.name())) {
-                setPricePerItem(config.getDouble("new-order-menu.item-prices." + material.name()));
-            }
-
-            player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("item-selected").replace("%item%", material.name())));
-            playerInputStates.remove(player.getUniqueId());
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                updateMenuItems();
-                this.open(player);
-            }, 5L);
-
-        } catch (IllegalArgumentException e) {
-            player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("invalid-item")));
-            requestChatInput(player, ChatInputState.WAITING_FOR_ITEM);
-        }
-    }
-
     private void processQuantityInput(Player player, String input) {
         try {
             int amount = Integer.parseInt(input);
             if (amount <= 0) {
                 player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("invalid-quantity")));
-                requestChatInput(player, ChatInputState.WAITING_FOR_QUANTITY);
+                NOrder.getInstance().getChatInputManager().setAwaitingInput((Player) player, value -> {
+                    processQuantityInput(player, value);
+                });
                 return;
             }
 
             setQuantity(amount);
             player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("quantity-set")
                     .replace("%quantity%", String.valueOf(amount))));
-            playerInputStates.remove(player.getUniqueId());
 
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Bukkit.getScheduler().runTaskLater(main, () -> {
                 updateMenuItems();
                 this.open(player);
             }, 5L);
 
         } catch (NumberFormatException e) {
             player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("invalid-quantity")));
-            requestChatInput(player, ChatInputState.WAITING_FOR_QUANTITY);
         }
     }
 
@@ -431,23 +344,23 @@ public class NewOrderMenu extends FastInv implements Listener {
             double price = Double.parseDouble(input);
             if (price <= 0) {
                 player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("invalid-price")));
-                requestChatInput(player, ChatInputState.WAITING_FOR_PRICE);
+                NOrder.getInstance().getChatInputManager().setAwaitingInput((Player) player, value -> {
+                    processPriceInput(player, value);
+                });
                 return;
             }
 
             setPricePerItem(price);
             player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("price-set")
                     .replace("%price%", String.valueOf(price))));
-            playerInputStates.remove(player.getUniqueId());
 
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            Bukkit.getScheduler().runTaskLater(main, () -> {
                 updateMenuItems();
                 this.open(player);
             }, 5L);
 
         } catch (NumberFormatException e) {
             player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("invalid-price")));
-            requestChatInput(player, ChatInputState.WAITING_FOR_PRICE);
         }
     }
 
@@ -456,11 +369,7 @@ public class NewOrderMenu extends FastInv implements Listener {
         super.onClose(event);
         HumanEntity entity = event.getPlayer();
         Player player = (Player) entity;
-        playerInputStates.remove(player.getUniqueId());
-        if (inputTimeoutTask != null) {
-            inputTimeoutTask.cancel();
-            inputTimeoutTask = null;
-        }
+        NOrder.getInstance().getChatInputManager().cancelInput(player);
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.notpatch.nOrder.manager;
 import com.notpatch.nOrder.NOrder;
 import com.notpatch.nOrder.database.DatabaseManager;
 import com.notpatch.nOrder.model.PlayerStatistics;
+import com.notpatch.nlib.util.NLogger;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 
@@ -26,6 +27,10 @@ public class PlayerStatisticsManager {
     }
 
     public void loadStatistics() {
+        if (!databaseManager.isConnectionValid()) {
+            NLogger.error("Database connection is null or invalid. Cannot load player statistics.");
+            return;
+        }
         String query = "SELECT * FROM player_stats";
 
         try (Connection conn = databaseManager.getDataSource().getConnection();
@@ -49,6 +54,10 @@ public class PlayerStatisticsManager {
     }
 
     public void saveStatistics() {
+        if (!databaseManager.isConnectionValid()) {
+            NLogger.error("Database connection is null or invalid. Cannot save player statistics.");
+            return;
+        }
         String query = """
                 INSERT INTO player_stats (player_id, player_name, delivered_items, collected_items, total_orders, total_earnings)
                 VALUES (?, ?, ?, ?, ?, ?)

@@ -30,6 +30,8 @@ import java.util.List;
 
 public class YourOrdersMenu extends FastInv {
 
+    private final NOrder main;
+
     @Getter
     @Setter
     private int currentPage = 1;
@@ -46,7 +48,7 @@ public class YourOrdersMenu extends FastInv {
                 ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("your-orders-menu.title")));
 
         this.player = player;
-        NOrder main = NOrder.getInstance();
+        main = NOrder.getInstance();
         Configuration configuration = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
 
         this.currentPage = page;
@@ -62,7 +64,7 @@ public class YourOrdersMenu extends FastInv {
         }
 
         loadMenuItems(configuration);
-        loadPlayerOrders(main);
+        loadPlayerOrders();
     }
 
     private void loadMenuItems(Configuration configuration) {
@@ -98,8 +100,8 @@ public class YourOrdersMenu extends FastInv {
         }
     }
 
-    private void loadPlayerOrders(NOrder plugin) {
-        List<Order> playerOrders = plugin.getOrderManager().getPlayerOrdersIncludingCompleted(player.getName());
+    private void loadPlayerOrders() {
+        List<Order> playerOrders = main.getOrderManager().getPlayerOrdersIncludingCompleted(player.getName());
 
         int startIndex = (currentPage - 1) * itemsPerPage;
         int endIndex = Math.min(startIndex + itemsPerPage, playerOrders.size());
@@ -113,7 +115,7 @@ public class YourOrdersMenu extends FastInv {
         List<Order> pageOrders = (startIndex < playerOrders.size()) ?
                 playerOrders.subList(startIndex, endIndex) : new ArrayList<>();
 
-        Configuration config = plugin.getConfigurationManager().getMenuConfiguration().getConfiguration();
+        Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
         ConfigurationSection template = config.getConfigurationSection("your-orders-menu.order-item-template");
 
         if (template != null) {
@@ -251,12 +253,12 @@ public class YourOrdersMenu extends FastInv {
         switch (action) {
             case "back":
                 player.closeInventory();
-                Bukkit.getScheduler().runTask(NOrder.getInstance(), () -> {
+                Bukkit.getScheduler().runTask(main, () -> {
                     new MainOrderMenu().open((Player) player);
                 });
                 break;
             case "next-page":
-                if (currentPage < Math.ceil((double) NOrder.getInstance().getOrderManager().getPlayerOrders(player.getName()).size() / itemsPerPage)) {
+                if (currentPage < Math.ceil((double) main.getOrderManager().getPlayerOrders(player.getName()).size() / itemsPerPage)) {
                     player.closeInventory();
                     new YourOrdersMenu((Player) player, currentPage + 1).open((Player) player);
                 }

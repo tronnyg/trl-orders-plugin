@@ -10,7 +10,6 @@ import com.notpatch.nlib.builder.ItemBuilder;
 import com.notpatch.nlib.effect.NSound;
 import com.notpatch.nlib.fastinv.FastInv;
 import com.notpatch.nlib.util.ColorUtil;
-import com.notpatch.nlib.util.NLogger;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
@@ -24,13 +23,17 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MainOrderMenu extends FastInv {
+
+    private final NOrder main;
 
     @Getter
     @Setter
@@ -55,7 +58,7 @@ public class MainOrderMenu extends FastInv {
         super(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getInt("main-order-menu.size"),
                 ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("main-order-menu.title")));
 
-        NOrder main = NOrder.getInstance();
+        main = NOrder.getInstance();
         Configuration configuration = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
 
         this.currentPage = page;
@@ -82,7 +85,7 @@ public class MainOrderMenu extends FastInv {
         }
 
         loadMenuItems(configuration);
-        loadOrderItems(main, this.filteredOrders);
+        loadOrderItems(this.filteredOrders);
     }
 
     private List<Order> filterOrders(List<Order> orders, String filterType, String filterValue) {
@@ -132,7 +135,7 @@ public class MainOrderMenu extends FastInv {
         }
     }
 
-    private void loadOrderItems(NOrder plugin, List<Order> orders) {
+    private void loadOrderItems(List<Order> orders) {
         List<Order> allOrders = orders;
 
         int startIndex = (currentPage - 1) * itemsPerPage;
@@ -147,7 +150,7 @@ public class MainOrderMenu extends FastInv {
         List<Order> pageOrders = (startIndex < allOrders.size()) ?
                 allOrders.subList(startIndex, endIndex) : new ArrayList<>();
 
-        Configuration config = plugin.getConfigurationManager().getMenuConfiguration().getConfiguration();
+        Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
         ConfigurationSection template = config.getConfigurationSection("main-order-menu.order-item-template");
 
         if (template != null) {
@@ -291,9 +294,9 @@ public class MainOrderMenu extends FastInv {
             case "search-order" -> {
                 player.closeInventory();
                 player.sendMessage(LanguageLoader.getMessage("enter-item"));
-                NOrder.getInstance().getChatInputManager().setAwaitingInput((Player) player, searchValue -> {
+                main.getChatInputManager().setAwaitingInput((Player) player, searchValue -> {
                     Bukkit.getScheduler().runTask(NOrder.getInstance(), () -> {
-                        new MainOrderMenu(1, NOrder.getInstance().getOrderManager().getHighlightedOrdersFirst(),
+                        new MainOrderMenu(1, main.getOrderManager().getHighlightedOrdersFirst(),
                                 "item", searchValue).open((Player) player);
                     });
                 });

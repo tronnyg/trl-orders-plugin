@@ -1,11 +1,11 @@
 package com.notpatch.nOrder.gui;
 
 import com.notpatch.nOrder.LanguageLoader;
+import com.notpatch.nOrder.NOrder;
+import com.notpatch.nOrder.model.Order;
 import com.notpatch.nOrder.model.OrderStatus;
 import com.notpatch.nlib.effect.NSound;
 import com.notpatch.nlib.fastinv.FastInv;
-import com.notpatch.nOrder.NOrder;
-import com.notpatch.nOrder.model.Order;
 import com.notpatch.nlib.util.ColorUtil;
 import org.bukkit.Material;
 import org.bukkit.configuration.Configuration;
@@ -21,6 +21,8 @@ import java.util.Map;
 
 public class OrderTakeMenu extends FastInv {
 
+    private final NOrder main;
+
     private final Order order;
     private final Map<Integer, ItemStack> deliveredItems;
 
@@ -29,7 +31,7 @@ public class OrderTakeMenu extends FastInv {
                         .getInt("order-take-menu.size"),
                 ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration()
                         .getConfiguration().getString("order-take-menu.title")));
-
+        main = NOrder.getInstance();
         this.order = order;
         this.deliveredItems = new HashMap<>();
 
@@ -49,7 +51,7 @@ public class OrderTakeMenu extends FastInv {
     }
 
     private void loadMenuItems() {
-        Configuration config = NOrder.getInstance().getConfigurationManager()
+        Configuration config = main.getConfigurationManager()
                 .getMenuConfiguration().getConfiguration();
 
         setItems(config.getIntegerList("order-take-menu.items.filler.slots"),
@@ -73,7 +75,7 @@ public class OrderTakeMenu extends FastInv {
     }
 
     private void loadDeliveredItems() {
-        List<Integer> slots = NOrder.getInstance().getConfigurationManager()
+        List<Integer> slots = main.getConfigurationManager()
                 .getMenuConfiguration().getConfiguration()
                 .getIntegerList("order-take-menu.delivery-slots");
 
@@ -116,7 +118,7 @@ public class OrderTakeMenu extends FastInv {
         if (order.getCollected() >= order.getDelivered()) {
             order.setStatus(OrderStatus.ARCHIVED);
             player.closeInventory();
-            NOrder.getInstance().getOrderManager().removeOrder(order);
+            main.getOrderManager().removeOrder(order);
         }
 
         ((Player) player).updateInventory();
