@@ -49,7 +49,7 @@ database:
   port: 3306                  # MySQL port
   database: norder            # Database name
   username: root              # MySQL username
-  password: password123       # MySQL password
+  password: your_secure_password  # MySQL password
 
 lang: en_US                   # Language (en_US or tr_TR)
 
