@@ -33,7 +33,7 @@ A comprehensive marketplace plugin for Minecraft Paper servers that allows playe
 
 1. Download the latest release of NOrder
 2. Place the `.jar` file in your server's `plugins` folder
-3. Install required dependencies (Vault, NLib)
+3. Install required dependencies (Vault)
 4. Restart your server
 5. Configure the plugin in `plugins/NOrder/config.yml`
 6. Reload the plugin with `/orderadmin reload`
