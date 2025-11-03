@@ -1,8 +1,8 @@
 package com.notpatch.nOrder;
 
 import com.notpatch.nlib.util.NLogger;
-import io.papermc.paper.plugin.loader.PluginLoader;
 import io.papermc.paper.plugin.loader.PluginClasspathBuilder;
+import io.papermc.paper.plugin.loader.PluginLoader;
 import io.papermc.paper.plugin.loader.library.impl.MavenLibraryResolver;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.graph.Dependency;
@@ -27,7 +27,8 @@ public class LibraryLoader implements PluginLoader {
                 .map(DefaultArtifact::new)
                 .forEach(artifact -> resolver.addDependency(new Dependency(artifact, null)));
 
-        resolver.addRepository(new RemoteRepository.Builder("central", "default", getMavenUrl()).build());
+        resolver.addRepository(new RemoteRepository.Builder("central", "default",
+                MavenLibraryResolver.MAVEN_CENTRAL_DEFAULT_MIRROR).build());
         resolver.addRepository(new RemoteRepository.Builder("jitpack.io", "default", "https://jitpack.io").build());
 
         classpathBuilder.addLibrary(resolver);
