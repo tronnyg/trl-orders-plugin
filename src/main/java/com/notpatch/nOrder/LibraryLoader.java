@@ -28,7 +28,7 @@ public class LibraryLoader implements PluginLoader {
                 .forEach(artifact -> resolver.addDependency(new Dependency(artifact, null)));
 
         resolver.addRepository(new RemoteRepository.Builder("central", "default",
-                MavenLibraryResolver.MAVEN_CENTRAL_DEFAULT_MIRROR).build());
+                getMavenUrl()).build());
         resolver.addRepository(new RemoteRepository.Builder("jitpack.io", "default", "https://jitpack.io").build());
 
         classpathBuilder.addLibrary(resolver);
@@ -69,10 +69,11 @@ public class LibraryLoader implements PluginLoader {
 
 
     @NotNull
-    private String getMavenUrl() {
+    private static String getMavenUrl() {
         return Stream.of(
                 System.getenv("PAPER_DEFAULT_CENTRAL_REPOSITORY"),
-                "https://repo.maven.apache.org/maven2/"
-        ).filter(Objects::nonNull).findFirst().orElseThrow();
+                System.getProperty("org.bukkit.plugin.java.LibraryLoader.centralURL"),
+                "https://maven-central.storage-download.googleapis.com/maven2"
+        ).filter(Objects::nonNull).findFirst().orElseThrow(IllegalStateException::new);
     }
 }
