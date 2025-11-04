@@ -66,6 +66,7 @@ main-order-menu:
       - ""
       - "&7Each: &f%price%"
       - "&7Total: &f%total_price%"
+      - "&7Paid: &f%paid_price%"
       - ""
       - '&7%time_remaining%'
       - ""
