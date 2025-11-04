@@ -44,7 +44,7 @@ public class StringUtil {
                 .replace("%ordered_by%", order.getPlayerName());
     }
 
-    private static String formatMaterialName(Material material) {
+    public static String formatMaterialName(Material material) {
         String materialName = material.name().toLowerCase().replace('_', ' ');
         StringBuilder builder = new StringBuilder();
         for (String parts : materialName.split(" ")) {
