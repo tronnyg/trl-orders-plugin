@@ -115,10 +115,12 @@ public class OrderTakeMenu extends FastInv {
 
         order.addCollected(clickedItem.getAmount());
 
-        if (order.getCollected() >= order.getDelivered()) {
-            order.setStatus(OrderStatus.ARCHIVED);
-            player.closeInventory();
-            main.getOrderManager().removeOrder(order);
+        if (order.getStatus() == OrderStatus.COMPLETED) {
+            if (order.getCollected() >= order.getDelivered()) {
+                order.setStatus(OrderStatus.ARCHIVED);
+                player.closeInventory();
+                main.getOrderManager().removeOrder(order);
+            }
         }
 
         ((Player) player).updateInventory();
