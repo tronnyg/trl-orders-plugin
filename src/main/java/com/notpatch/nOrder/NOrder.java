@@ -4,6 +4,7 @@ import com.notpatch.nOrder.command.OrderAdminCommand;
 import com.notpatch.nOrder.command.OrderCommand;
 import com.notpatch.nOrder.database.DatabaseManager;
 import com.notpatch.nOrder.gui.NewOrderMenu;
+import com.notpatch.nOrder.hook.Metrics;
 import com.notpatch.nOrder.hook.PlaceholderHook;
 import com.notpatch.nOrder.listener.ChatInputListener;
 import com.notpatch.nOrder.manager.*;
@@ -42,6 +43,9 @@ public final class NOrder extends JavaPlugin {
 
     @Getter
     private WebhookManager webhookManager;
+
+    @Getter
+    private Metrics metrics;
 
     @Override
     public void onEnable() {
@@ -108,6 +112,9 @@ public final class NOrder extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new ChatInputListener(this), this);
 
+        metrics = new Metrics(this, 27885);
+
+
     }
 
     @Override
@@ -116,6 +123,7 @@ public final class NOrder extends JavaPlugin {
         if (playerStatsManager != null) playerStatsManager.saveStatistics();
         if (databaseManager != null) databaseManager.disconnect();
         if (configurationManager != null) configurationManager.saveConfigurations();
+        metrics.shutdown();
     }
 
 }
