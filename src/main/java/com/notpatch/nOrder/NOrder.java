@@ -114,6 +114,9 @@ public final class NOrder extends JavaPlugin {
 
         metrics = new Metrics(this, 27885);
 
+        UpdateChecker updateChecker = new UpdateChecker(this);
+        updateChecker.checkUpdates();
+
 
     }
 
