@@ -86,6 +86,9 @@ public class UpdateChecker {
     }
 
     private void sendUpdateNotification(UpdateInfo updateInfo) {
+        if (updateInfo.isCritical()) {
+            NLogger.error("A critical update is available! Please update immediately!");
+        }
         switch (updateInfo.getVersionComparison()) {
             case MAJOR_UPDATE -> {
                 NLogger.warn("A major update is available! Current version: " + updateInfo.getCurrentVersion() + ", Latest version: " + updateInfo.getLatestVersion());
