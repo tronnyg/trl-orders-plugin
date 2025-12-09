@@ -36,6 +36,8 @@ public class OrderDetailsMenu extends FastInv {
     @Getter
     private double totalEarning = 0;
 
+    private boolean processed = false;
+
     public OrderDetailsMenu(Order order) {
         super(54, ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("order-details-menu.title")));
         main = NOrder.getInstance();
@@ -51,12 +53,32 @@ public class OrderDetailsMenu extends FastInv {
     @Override
     protected void onClose(InventoryCloseEvent e) {
         super.onClose(e);
+
+        if (processed) {
+            return;
+        }
+        processed = true;
+
         Player player = (Player) e.getPlayer();
 
         processDelivery(player);
     }
 
     private void processDelivery(Player player) {
+        if (order.getStatus() != OrderStatus.ACTIVE) {
+            for (int i = 0; i < getInventory().getSize(); i++) {
+                ItemStack item = getInventory().getItem(i);
+                if (item != null && !item.getType().isAir()) {
+                    player.getInventory().addItem(item).forEach((slot, leftover) ->
+                            player.getWorld().dropItemNaturally(player.getLocation(), leftover));
+                    getInventory().clear(i);
+                }
+            }
+            player.sendMessage(LanguageLoader.getMessage("order-not-active"));
+            NSound.error(player);
+            return;
+        }
+
         List<ItemStack> validItems = new ArrayList<>();
         List<ItemStack> invalidItems = new ArrayList<>();
 
@@ -129,40 +151,58 @@ public class OrderDetailsMenu extends FastInv {
                 totalAmount += item.getAmount();
             }
 
-            if (totalAmount > order.getRemaining()) {
-                int excess = totalAmount - order.getRemaining();
-                totalAmount = order.getRemaining();
-
-                if (excess > 0) {
-                    ItemStack excessItem = new ItemStack(order.getMaterial(), excess);
-                    player.getInventory().addItem(excessItem).forEach((slot, leftover) ->
-                            player.getWorld().dropItemNaturally(player.getLocation(), leftover));
-
-                    player.sendMessage(LanguageLoader.getMessage("delivery-excess-items").replace("%amount%", excess + ""));
+            synchronized (order) {
+                if (order.getStatus() != OrderStatus.ACTIVE) {
+                    for (ItemStack item : validItems) {
+                        player.getInventory().addItem(item).forEach((slot, leftover) ->
+                                player.getWorld().dropItemNaturally(player.getLocation(), leftover));
+                    }
+                    player.sendMessage(LanguageLoader.getMessage("order-not-active"));
+                    NSound.error(player);
+                    return;
                 }
-            }
 
-            if (totalAmount > 0) {
-                double earning = totalAmount * order.getPrice();
+                int currentRemaining = order.getRemaining();
 
-                order.addDelivered(totalAmount);
+                if (totalAmount > currentRemaining) {
+                    int excess = totalAmount - currentRemaining;
+                    totalAmount = currentRemaining;
 
-                player.sendMessage(LanguageLoader.getMessage("delivery-success").replace("%material%", order.getMaterial().name()).replace("%amount%", totalAmount + ""));
-                player.sendMessage(LanguageLoader.getMessage("delivery-earnings").replace("%amount%", String.format("%.2f", earning)));
+                    if (excess > 0) {
+                        ItemStack excessItem = order.getItem().clone();
+                        excessItem.setAmount(excess);
+                        player.getInventory().addItem(excessItem).forEach((slot, leftover) ->
+                                player.getWorld().dropItemNaturally(player.getLocation(), leftover));
 
-                main.getEconomy().depositPlayer(player, earning);
-                main.getPlayerStatsManager().getStatistics(player.getUniqueId()).addDeliveredItems(totalAmount);
-                main.getPlayerStatsManager().getStatistics(player.getUniqueId()).addTotalEarnings(earning);
-                main.getPlayerStatsManager().getStatistics(order.getPlayerId()).addCollectedItems(totalAmount);
+                        player.sendMessage(LanguageLoader.getMessage("delivery-excess-items").replace("%amount%", excess + ""));
+                    }
+                }
 
-                NSound.success(player);
+                if (totalAmount > 0) {
+                    double earning = totalAmount * order.getPrice();
 
-                if (order.getRemaining() <= 0) {
+                    order.addDelivered(totalAmount);
 
-                    Player orderOwner = Bukkit.getPlayer(order.getPlayerId());
-                    if (orderOwner != null && orderOwner.isOnline()) {
-                        orderOwner.sendMessage(LanguageLoader.getMessage("delivery-completed").replace("%material%", order.getMaterial().name()));
+                    player.sendMessage(LanguageLoader.getMessage("delivery-success").replace("%material%", order.getMaterial().name()).replace("%amount%", totalAmount + ""));
+                    player.sendMessage(LanguageLoader.getMessage("delivery-earnings").replace("%amount%", String.format("%.2f", earning)));
+
+                    main.getEconomy().depositPlayer(player, earning);
+                    main.getPlayerStatsManager().getStatistics(player.getUniqueId()).addDeliveredItems(totalAmount);
+                    main.getPlayerStatsManager().getStatistics(player.getUniqueId()).addTotalEarnings(earning);
+                    main.getPlayerStatsManager().getStatistics(order.getPlayerId()).addCollectedItems(totalAmount);
+
+                    main.getOrderLogger().logOrderDelivery(order, player.getName(), totalAmount, earning);
+
+                    NSound.success(player);
+
+                    if (order.getRemaining() <= 0) {
                         order.setStatus(OrderStatus.COMPLETED);
+                        main.getOrderLogger().logOrderCompleted(order);
+
+                        Player orderOwner = Bukkit.getPlayer(order.getPlayerId());
+                        if (orderOwner != null && orderOwner.isOnline()) {
+                            orderOwner.sendMessage(LanguageLoader.getMessage("delivery-completed").replace("%material%", order.getMaterial().name()));
+                        }
                     }
                 }
             }
@@ -174,7 +214,10 @@ public class OrderDetailsMenu extends FastInv {
     @Override
     protected void onClick(InventoryClickEvent event) {
         event.setCancelled(false);
-        NSound.click((Player) event.getWhoClicked());
+        if (event.getCursor().getType() != Material.AIR) {
+            NSound.click((Player) event.getWhoClicked());
+        }
+
     }
 
     @Override
