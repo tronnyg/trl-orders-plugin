@@ -4,6 +4,7 @@ import com.notpatch.nOrder.NOrder;
 import com.notpatch.nOrder.Settings;
 import com.notpatch.nOrder.gui.MainOrderMenu;
 import com.notpatch.nOrder.gui.OrderDetailsMenu;
+import com.notpatch.nOrder.gui.OrderTakeMenu;
 import com.notpatch.nOrder.model.Order;
 import com.notpatch.nlib.effect.NSound;
 import io.papermc.paper.command.brigadier.BasicCommand;
@@ -13,7 +14,9 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.jspecify.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class OrderCommand implements BasicCommand {
@@ -29,6 +32,11 @@ public class OrderCommand implements BasicCommand {
                 if (split[0].equalsIgnoreCase("id")) {
                     Order order = NOrder.getInstance().getOrderManager().getOrderById(split[1]);
                     if (order != null) {
+                        if (order.getPlayerId() == player.getUniqueId()) {
+                            new OrderTakeMenu(order).open(player);
+                            NSound.click(player);
+                            return;
+                        }
                         new OrderDetailsMenu(order).open(player);
                         NSound.click(player);
                         return;
