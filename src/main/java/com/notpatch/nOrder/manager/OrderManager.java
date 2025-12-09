@@ -91,6 +91,8 @@ public class OrderManager {
                 boolean highlight = rs.getBoolean("highlight");
                 String status = rs.getString("status");
 
+                if (status.equalsIgnoreCase("ARCHIVED")) continue;
+
                 Order order = new Order(orderId, playerId, playerName, item, amount, price, createdAt, expiresAt, highlight);
                 order.setStatus(OrderStatus.valueOf(status));
                 order.setDelivered(delivered);
@@ -117,7 +119,8 @@ public class OrderManager {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
                 delivered = VALUES(delivered),
-                collected = VALUES(collected)
+                collected = VALUES(collected),
+                status = VALUES(status)
                 """;
 
         if (main.getDatabaseManager().isUsingSQLite()) {
@@ -132,6 +135,7 @@ public class OrderManager {
 
             for (List<Order> orders : ordersByPlayer.values()) {
                 for (Order order : orders) {
+
                     stmt.setString(1, order.getId());
                     stmt.setString(2, order.getPlayerId().toString());
                     stmt.setString(3, order.getPlayerName());
@@ -233,6 +237,11 @@ public class OrderManager {
 
     public void addOrder(Order order) {
         double totalPrice = order.getPrice() * order.getAmount();
+
+        if (order.isHighlight() && Settings.HIGHLIGHT_FEE > 0) {
+            totalPrice += totalPrice * Settings.HIGHLIGHT_FEE / 100;
+        }
+
         OfflinePlayer offlinePlayer = main.getServer().getOfflinePlayer(order.getPlayerId());
         if (PlayerUtil.getPlayer(offlinePlayer) == null) {
             return;
@@ -249,6 +258,7 @@ public class OrderManager {
                     .replace("%price%", String.valueOf(order.getPrice())));
             order.setStatus(OrderStatus.ACTIVE);
             main.getPlayerStatsManager().getStatistics(order.getPlayerId()).addTotalOrders(1);
+            main.getOrderLogger().logOrderCreated(order, totalPrice);
             NSound.success(player);
             return;
         }
@@ -283,6 +293,7 @@ public class OrderManager {
                 .replace("%price%", String.valueOf(order.getPrice())));
         order.setStatus(OrderStatus.ACTIVE);
         main.getPlayerStatsManager().getStatistics(order.getPlayerId()).addTotalOrders(1);
+        main.getOrderLogger().logOrderCreated(order, totalPrice);
         NSound.success(player);
         DiscordWebhook webhook = main.getWebhookManager().getWebhooks().get("order-create");
         if (webhook != null) {
@@ -323,14 +334,6 @@ public class OrderManager {
         }
     }
 
-    public Order createRandomOrder() {
-        Order order = new Order(createRandomId(), UUID.randomUUID(), "Random" + createRandomId(), new ItemStack(Settings.availableItems.get(new Random().nextInt(0, Settings.availableItems.size()))), 1, 100, LocalDateTime.now(), LocalDateTime.now().plusDays(1), false);
-        order.setStatus(OrderStatus.ACTIVE);
-
-        getPlayerOrders(order.getPlayerId()).add(order);
-        return order;
-    }
-
     private String formatEnchantmentsForWebhook(ItemStack item) {
         if (item == null) return "-";
 
@@ -362,6 +365,7 @@ public class OrderManager {
 
         double refundAmount = (order.getAmount() - order.getDelivered()) * order.getPrice();
         main.getEconomy().depositPlayer(offlinePlayer, refundAmount);
+        main.getOrderLogger().logOrderCancelled(order, refundAmount);
         removeOrder(order);
         if (player.isOnline()) {
             player.sendMessage(LanguageLoader.getMessage("order-cancelled")
@@ -378,13 +382,17 @@ public class OrderManager {
         List<Order> playerOrders = ordersByPlayer.get(order.getPlayerId());
         if (playerOrders == null) return false;
 
+        if (order.getStatus() == OrderStatus.ARCHIVED) {
+            return false;
+        }
+
         boolean removed = playerOrders.removeIf(o -> o == order);
 
         if (playerOrders.isEmpty()) {
             ordersByPlayer.remove(order.getPlayerId());
         }
 
-        try (Connection conn = main.getDatabaseManager().getDataSource().getConnection();
+       /*try (Connection conn = main.getDatabaseManager().getDataSource().getConnection();
              PreparedStatement stmt = conn.prepareStatement("DELETE FROM orders WHERE order_id = ?")) {
 
             stmt.setString(1, order.getId());
@@ -393,7 +401,7 @@ public class OrderManager {
         } catch (SQLException e) {
             NLogger.error("Failed to remove order from database: " + e.getMessage());
             return false;
-        }
+        }*/
 
         return removed;
     }
@@ -410,21 +418,20 @@ public class OrderManager {
     }
 
     public void cleanExpiredOrders() {
-        LocalDateTime now = LocalDateTime.now();
         for (List<Order> orders : new ArrayList<>(ordersByPlayer.values())) {
             orders.forEach(order -> {
                 if (order.isExpired()) {
                     order.setStatus(OrderStatus.COMPLETED);
                     if (order.getDelivered() < order.getAmount()) {
-                        double undelivered = Math.max(0, order.getAmount() - order.getDelivered());
-                        double pendingCollection = order.getDelivered() - order.getCollected();
 
-                        double refundAmount = undelivered + pendingCollection;
+                        double refundAmount = Math.max(0, order.getAmount() - order.getDelivered());
                         if (refundAmount > 0) {
                             OfflinePlayer player = main.getServer().getOfflinePlayer(order.getPlayerId());
                             main.getEconomy().depositPlayer(player, refundAmount);
                         }
-
+                        main.getOrderLogger().logOrderExpired(order, refundAmount);
+                        order.setStatus(OrderStatus.ARCHIVED);
+                        main.getOrderLogger().logOrderArchived(order);
                     }
                 }
             });
@@ -432,7 +439,7 @@ public class OrderManager {
 
         ordersByPlayer.values().removeIf(List::isEmpty);
 
-        try (Connection conn = main.getDatabaseManager().getDataSource().getConnection();
+        /*try (Connection conn = main.getDatabaseManager().getDataSource().getConnection();
              PreparedStatement stmt = conn.prepareStatement("DELETE FROM orders WHERE expires_at < ?")) {
             stmt.setTimestamp(1, Timestamp.valueOf(now));
             int deleted = stmt.executeUpdate();
@@ -441,7 +448,7 @@ public class OrderManager {
             }
         } catch (SQLException e) {
             NLogger.error("Failed to clean expired orders: " + e.getMessage());
-        }
+        }*/
     }
 
     public List<Order> getAllOrders() {
