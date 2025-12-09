@@ -114,10 +114,12 @@ public class OrderTakeMenu extends FastInv {
         }
 
         order.addCollected(clickedItem.getAmount());
+        main.getOrderLogger().logItemCollection(order, clickedItem.getAmount());
 
         if (order.getStatus() == OrderStatus.COMPLETED) {
             if (order.getCollected() >= order.getDelivered()) {
                 order.setStatus(OrderStatus.ARCHIVED);
+                main.getOrderLogger().logOrderArchived(order);
                 player.closeInventory();
                 main.getOrderManager().removeOrder(order);
             }
@@ -140,6 +142,8 @@ public class OrderTakeMenu extends FastInv {
     @Override
     protected void onClick(InventoryClickEvent event) {
         Player player = (Player) event.getWhoClicked();
-        NSound.click(player);
+        if (event.getCursor().getType() != Material.AIR) {
+            NSound.click(player);
+        }
     }
 }
