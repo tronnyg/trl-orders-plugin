@@ -51,6 +51,9 @@ public final class NOrder extends JavaPlugin {
     @Getter
     private MorePaperLib morePaperLib;
 
+    @Getter
+    private OrderLogger orderLogger;
+
     @Override
     public void onEnable() {
         instance = this;
@@ -89,6 +92,8 @@ public final class NOrder extends JavaPlugin {
         databaseManager = new DatabaseManager(this);
         databaseManager.connect();
         databaseManager.createTables();
+
+        orderLogger = new OrderLogger(this);
 
         orderManager = new OrderManager(this);
         orderManager.loadOrders();
