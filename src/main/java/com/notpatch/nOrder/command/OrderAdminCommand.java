@@ -23,6 +23,8 @@ public class OrderAdminCommand implements BasicCommand {
     @Override
     public void execute(CommandSourceStack commandSourceStack, String[] args) {
 
+        Entity entity = commandSourceStack.getExecutor();
+
         if (args.length == 0) {
             commandSourceStack.getExecutor().sendMessage(LanguageLoader.getMessage("admin-usage-reload"));
             commandSourceStack.getExecutor().sendMessage(LanguageLoader.getMessage("admin-usage-info"));
@@ -33,7 +35,9 @@ public class OrderAdminCommand implements BasicCommand {
         if (args.length == 1) {
             if (args[0].equalsIgnoreCase("reload")) {
                 reloadConfigurations(commandSourceStack.getExecutor());
-                NSound.success((Player) commandSourceStack.getExecutor());
+                if (entity instanceof Player player) {
+                    NSound.success(player);
+                }
             }
         }
 
@@ -50,7 +54,9 @@ public class OrderAdminCommand implements BasicCommand {
                     String buyerName = order.getPlayerName();
 
                     int delivered = order.getDelivered();
-                    NSound.success((Player) commandSourceStack.getExecutor());
+                    if (entity instanceof Player player) {
+                        NSound.success(player);
+                    }
                     commandSourceStack.getExecutor().sendMessage(LanguageLoader.getMessage("order-info")
                             .replace("%id%", orderId)
                             .replace("%buyer%", buyerName)
@@ -64,7 +70,9 @@ public class OrderAdminCommand implements BasicCommand {
                     return;
                 } else {
                     commandSourceStack.getExecutor().sendMessage(LanguageLoader.getMessage("order-not-found").replace("%id%", orderId));
-                    NSound.error((Player) commandSourceStack.getExecutor());
+                    if (entity instanceof Player player) {
+                        NSound.error(player);
+                    }
                     return;
                 }
             }
@@ -72,13 +80,19 @@ public class OrderAdminCommand implements BasicCommand {
                 String orderId = args[1];
                 Order order = NOrder.getInstance().getOrderManager().getOrderById(orderId);
                 if (order != null) {
+                    String adminName = entity instanceof Player player ? player.getName() : "Console";
+                    NOrder.getInstance().getOrderLogger().logAdminAction(adminName, "DELETE", order);
                     NOrder.getInstance().getOrderManager().removeOrder(order);
                     commandSourceStack.getExecutor().sendMessage(LanguageLoader.getMessage("order-deleted").replace("%id%", orderId));
-                    NSound.success((Player) commandSourceStack.getExecutor());
+                    if (entity instanceof Player player) {
+                        NSound.success(player);
+                    }
                     return;
                 } else {
                     commandSourceStack.getExecutor().sendMessage(LanguageLoader.getMessage("order-not-found").replace("%id%", orderId));
-                    NSound.error((Player) commandSourceStack.getExecutor());
+                    if (entity instanceof Player player) {
+                        NSound.error(player);
+                    }
                     return;
                 }
             }
