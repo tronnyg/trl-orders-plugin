@@ -300,6 +300,17 @@ public class NewOrderMenu extends FastInv implements Listener {
                     return;
                 }
 
+                double totalPrice = quantity * pricePerItem;
+                if (isHighlighted && Settings.HIGHLIGHT_FEE > 0) {
+                    totalPrice += totalPrice * Settings.HIGHLIGHT_FEE / 100;
+                }
+
+                if (totalPrice < 1.0) {
+                    player.sendMessage(LanguageLoader.getMessage("price-too-low"));
+                    NSound.error(player);
+                    return;
+                }
+
                 LocalDateTime now = LocalDateTime.now();
                 LocalDateTime expireAt = now.plusDays(PlayerUtil.getPlayerOrderExpiration(player));
                 String id = main.getOrderManager().createRandomId();
@@ -340,7 +351,7 @@ public class NewOrderMenu extends FastInv implements Listener {
     private void processPriceInput(Player player, String input) {
         try {
             double price = Double.parseDouble(input);
-            if (price <= 0) {
+            if (price < 1.0) {
                 player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("invalid-price")));
                 NOrder.getInstance().getChatInputManager().setAwaitingInput((Player) player, value -> {
                     processPriceInput(player, value);
