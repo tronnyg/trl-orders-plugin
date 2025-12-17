@@ -424,7 +424,7 @@ public class OrderManager {
                     order.setStatus(OrderStatus.COMPLETED);
                     if (order.getDelivered() < order.getAmount()) {
 
-                        double refundAmount = Math.max(0, order.getAmount() - order.getDelivered());
+                        double refundAmount = Math.max(0, order.getAmount() - order.getDelivered()) * order.getPrice();
                         if (refundAmount > 0) {
                             OfflinePlayer player = main.getServer().getOfflinePlayer(order.getPlayerId());
                             main.getEconomy().depositPlayer(player, refundAmount);
