@@ -369,9 +369,8 @@ public class NewOrderMenu extends FastInv implements Listener {
             double maxPrice = selectedItem != null ? Settings.getMaxPricePerItem(selectedItem.getType()) : Settings.MAX_PRICE_PER_ITEM;
             
             if (price < minPrice) {
-                player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("invalid-price")
-                        .replace("%min_price%", String.format("%.2f", minPrice))
-                        .replace("%max_price%", String.format("%.2f", maxPrice))));
+                player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("price-too-low")
+                        .replace("%min_price%", String.format("%.2f", minPrice))));
                 NOrder.getInstance().getChatInputManager().setAwaitingInput((Player) player, value -> {
                     processPriceInput(player, value);
                 });
@@ -379,8 +378,7 @@ public class NewOrderMenu extends FastInv implements Listener {
             }
             
             if (price > maxPrice) {
-                player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("invalid-price")
-                        .replace("%min_price%", String.format("%.2f", minPrice))
+                player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("price-too-high")
                         .replace("%max_price%", String.format("%.2f", maxPrice))));
                 NOrder.getInstance().getChatInputManager().setAwaitingInput((Player) player, value -> {
                     processPriceInput(player, value);
