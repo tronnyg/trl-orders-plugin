@@ -37,6 +37,8 @@ commands:
 settings:
   highlight-fee: 2.5
   send-webhooks: false
+  min-price-per-item: 0.01
+  max-price-per-item: 1000
 
 number-format:
   suffixes:
@@ -88,3 +90,13 @@ blacklist-items:
   - "PETRIFIED_OAK_SLAB"
   - "FARMLAND"
   - "BUDDING_AMETHYST"
+
+# Per-item price overrides
+# If no information is provided for an item, it uses the overall min/max values from settings
+per-item-price:
+  SHULKER_BOX:
+    min-price-per-item: 20
+    max-price-per-item: 100
+  DIAMOND:
+    min-price-per-item: 10
+    max-price-per-item: 500
