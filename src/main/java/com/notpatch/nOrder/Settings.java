@@ -2,6 +2,7 @@ package com.notpatch.nOrder;
 
 import org.bukkit.Material;
 import org.bukkit.configuration.Configuration;
+import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,6 +28,11 @@ public class Settings {
     public static double HIGHLIGHT_FEE;
     public static boolean SEND_WEBHOOKS;
 
+    public static double MIN_PRICE_PER_ITEM;
+    public static double MAX_PRICE_PER_ITEM;
+    public static Map<Material, Double> MIN_PRICE_PER_ITEM_OVERRIDES = new HashMap<>();
+    public static Map<Material, Double> MAX_PRICE_PER_ITEM_OVERRIDES = new HashMap<>();
+
     public static String HIGHLIGHT_PERMISSION;
 
     public static List<Material> availableItems = new ArrayList<>();
@@ -48,6 +54,30 @@ public class Settings {
         ORDER_ADMIN_PERMISSION = config.getString("permissions.order-admin", "norder.admin");
         HIGHLIGHT_FEE = config.getDouble("settings.highlight-fee", 2.5);
         SEND_WEBHOOKS = config.getBoolean("settings.send-webhooks", false);
+        MIN_PRICE_PER_ITEM = config.getDouble("settings.min-price-per-item", 0.01);
+        MAX_PRICE_PER_ITEM = config.getDouble("settings.max-price-per-item", 1000);
+        
+        // Load per-item price overrides
+        MIN_PRICE_PER_ITEM_OVERRIDES.clear();
+        MAX_PRICE_PER_ITEM_OVERRIDES.clear();
+        ConfigurationSection perItemPriceSection = config.getConfigurationSection("per-item-price");
+        if (perItemPriceSection != null) {
+            for (String materialName : perItemPriceSection.getKeys(false)) {
+                Material material = Material.matchMaterial(materialName);
+                if (material != null) {
+                    ConfigurationSection itemSection = perItemPriceSection.getConfigurationSection(materialName);
+                    if (itemSection != null) {
+                        if (itemSection.contains("min-price-per-item")) {
+                            MIN_PRICE_PER_ITEM_OVERRIDES.put(material, itemSection.getDouble("min-price-per-item"));
+                        }
+                        if (itemSection.contains("max-price-per-item")) {
+                            MAX_PRICE_PER_ITEM_OVERRIDES.put(material, itemSection.getDouble("max-price-per-item"));
+                        }
+                    }
+                }
+            }
+        }
+        
         DATE_FORMAT = config.getString("date-format", "MM-dd HH:mm:ss");
         HIGHLIGHT_PERMISSION = config.getString("permissions.use-highlight", "norder.highlight");
         ORDER_EXPIRATION_PERMISSION = config.getString("permissions.order-expiration", "norder.expiration");
@@ -70,6 +100,24 @@ public class Settings {
         PROGRESS_BAR_INCOMPLETE_CHAR = config.getString("progress-bar.incomplete-char", "░").charAt(0);
         PROGRESS_BAR_COMPLETE_COLOR = config.getString("progress-bar.complete-color", "&a");
         PROGRESS_BAR_INCOMPLETE_COLOR = config.getString("progress-bar.incomplete-color", "&7");
+    }
+
+    /**
+     * Get the minimum price per item for a specific material
+     * @param material The material to get the minimum price for
+     * @return The minimum price per item
+     */
+    public static double getMinPricePerItem(Material material) {
+        return MIN_PRICE_PER_ITEM_OVERRIDES.getOrDefault(material, MIN_PRICE_PER_ITEM);
+    }
+
+    /**
+     * Get the maximum price per item for a specific material
+     * @param material The material to get the maximum price for
+     * @return The maximum price per item
+     */
+    public static double getMaxPricePerItem(Material material) {
+        return MAX_PRICE_PER_ITEM_OVERRIDES.getOrDefault(material, MAX_PRICE_PER_ITEM);
     }
 
 }

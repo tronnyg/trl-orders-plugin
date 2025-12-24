@@ -299,16 +299,28 @@ public class NewOrderMenu extends FastInv implements Listener {
                     NSound.error(player);
                     return;
                 }
+                
+                // Validate price per item against configured limits
+                double minPrice = Settings.getMinPricePerItem(selectedItem.getType());
+                double maxPrice = Settings.getMaxPricePerItem(selectedItem.getType());
+                
+                if (pricePerItem < minPrice) {
+                    player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("price-too-low")
+                            .replace("%min_price%", String.format("%.2f", minPrice))));
+                    NSound.error(player);
+                    return;
+                }
+                
+                if (pricePerItem > maxPrice) {
+                    player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("price-too-high")
+                            .replace("%max_price%", String.format("%.2f", maxPrice))));
+                    NSound.error(player);
+                    return;
+                }
 
                 double totalPrice = quantity * pricePerItem;
                 if (isHighlighted && Settings.HIGHLIGHT_FEE > 0) {
                     totalPrice += totalPrice * Settings.HIGHLIGHT_FEE / 100;
-                }
-
-                if (totalPrice < 1.0) {
-                    player.sendMessage(LanguageLoader.getMessage("price-too-low"));
-                    NSound.error(player);
-                    return;
                 }
 
                 LocalDateTime now = LocalDateTime.now();
@@ -351,8 +363,23 @@ public class NewOrderMenu extends FastInv implements Listener {
     private void processPriceInput(Player player, String input) {
         try {
             double price = Double.parseDouble(input);
-            if (price < 1.0) {
-                player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("invalid-price")));
+            
+            // Get min and max price for the selected item
+            double minPrice = selectedItem != null ? Settings.getMinPricePerItem(selectedItem.getType()) : Settings.MIN_PRICE_PER_ITEM;
+            double maxPrice = selectedItem != null ? Settings.getMaxPricePerItem(selectedItem.getType()) : Settings.MAX_PRICE_PER_ITEM;
+            
+            if (price < minPrice) {
+                player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("price-too-low")
+                        .replace("%min_price%", String.format("%.2f", minPrice))));
+                NOrder.getInstance().getChatInputManager().setAwaitingInput((Player) player, value -> {
+                    processPriceInput(player, value);
+                });
+                return;
+            }
+            
+            if (price > maxPrice) {
+                player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("price-too-high")
+                        .replace("%max_price%", String.format("%.2f", maxPrice))));
                 NOrder.getInstance().getChatInputManager().setAwaitingInput((Player) player, value -> {
                     processPriceInput(player, value);
                 });
