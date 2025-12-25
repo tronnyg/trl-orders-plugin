@@ -10,11 +10,11 @@ import com.notpatch.nOrder.listener.ChatInputListener;
 import com.notpatch.nOrder.manager.*;
 import com.notpatch.nlib.NLib;
 import com.notpatch.nlib.compatibility.NCompatibility;
+import com.notpatch.nlib.libs.morepaperlib.MorePaperLib;
 import lombok.Getter;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-import space.arim.morepaperlib.MorePaperLib;
 
 public final class NOrder extends JavaPlugin {
 
@@ -59,22 +59,14 @@ public final class NOrder extends JavaPlugin {
         instance = this;
 
         NLib.initialize(this);
-
-        morePaperLib = new MorePaperLib(this);
-
-        saveDefaultConfig();
-        saveConfig();
-
-        Settings.loadSettings();
-
+        morePaperLib = NLib.getMorePaperLib();
         NCompatibility compatibility = new NCompatibility();
         compatibility.
                 checkBukkit("Paper", "Purpur", "Leaf", "Folia")
                 .checkVersion("1.21.4", "1.21.10")
-                .checkPlugin("PlaceholderAPI", false)
+                .checkPlugin("PlaceholderAPI", true)
                 .onSuccess(() -> {
                     new PlaceholderHook(this).register();
-
                 })
                 .checkPlugin("Vault", true)
                 .onSuccess(() -> {
@@ -88,13 +80,18 @@ public final class NOrder extends JavaPlugin {
                     economy = rsp.getProvider();
                 });
 
+        saveDefaultConfig();
+        saveConfig();
+
+        Settings.loadSettings();
+
+
 
         databaseManager = new DatabaseManager(this);
         databaseManager.connect();
         databaseManager.createTables();
 
         orderLogger = new OrderLogger(this);
-
 
         orderManager = new OrderManager(this);
         orderManager.loadOrders();
