@@ -75,13 +75,14 @@
 
     <repositories>
         <repository>
-            <id>papermc-repo</id>
-            <url>https://repo.papermc.io/repository/maven-public/</url>
-        </repository>
-        <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+        <repository>
+            <id>papermc-repo</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+
         <repository>
             <id>placeholderapi</id>
             <url>https://repo.extendedclip.com/releases/</url>
@@ -99,7 +100,7 @@
         <dependency>
             <groupId>com.github.notpatch</groupId>
             <artifactId>NLib</artifactId>
-            <version>1.4.3</version>
+            <version>1.4.8</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
