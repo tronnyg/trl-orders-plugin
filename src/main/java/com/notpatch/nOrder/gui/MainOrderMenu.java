@@ -18,6 +18,7 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -227,12 +228,24 @@ public class MainOrderMenu extends FastInv {
             lore.add(StringUtil.replaceOrderPlaceholders(line, order));
         }
 
+        List<String> flags = template.getStringList("item-flags");
+        List<ItemFlag> itemFlags = new ArrayList<>();
+        for (String flag : flags) {
+            try {
+                String formattedFlag = flag.toUpperCase().replace("-", "_");
+                ItemFlag itemFlag = ItemFlag.valueOf(formattedFlag);
+                itemFlags.add(itemFlag);
+            } catch (IllegalArgumentException e) {
+            }
+        }
+
         return ItemBuilder.builder()
                 .material(material)
                 .displayName(ColorUtil.hexColor(name))
                 .glow(order.isHighlight())
                 .enchantments(enchantments)
                 .lore(lore.stream().map(ColorUtil::hexColor).toList())
+                .itemFlags(itemFlags)
                 .build().build();
     }
 
