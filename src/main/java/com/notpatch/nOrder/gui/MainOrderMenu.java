@@ -9,7 +9,6 @@ import com.notpatch.nlib.builder.ItemBuilder;
 import com.notpatch.nlib.effect.NSound;
 import com.notpatch.nlib.fastinv.FastInv;
 import com.notpatch.nlib.util.ColorUtil;
-import com.notpatch.nlib.util.NLogger;
 import lombok.Getter;
 import lombok.Setter;
 import me.clip.placeholderapi.PlaceholderAPI;
@@ -190,7 +189,6 @@ public class MainOrderMenu extends FastInv {
 
                 ItemStack orderItem = createOrderItem(order, template);
 
-                NLogger.info("Order placed: " + order.getItem().getType().name() + " " + orderItem.getItemMeta().getItemFlags());
                 setItem(slot, orderItem, e -> {
                     ;
                     handleOrderClick(order, e.getWhoClicked());
