@@ -1,5 +1,6 @@
 package com.notpatch.nOrder.gui;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.notpatch.nOrder.LanguageLoader;
 import com.notpatch.nOrder.NOrder;
 import com.notpatch.nOrder.model.Order;
@@ -8,6 +9,7 @@ import com.notpatch.nlib.builder.ItemBuilder;
 import com.notpatch.nlib.effect.NSound;
 import com.notpatch.nlib.fastinv.FastInv;
 import com.notpatch.nlib.util.ColorUtil;
+import com.notpatch.nlib.util.NLogger;
 import lombok.Getter;
 import lombok.Setter;
 import me.clip.placeholderapi.PlaceholderAPI;
@@ -188,7 +190,9 @@ public class MainOrderMenu extends FastInv {
 
                 ItemStack orderItem = createOrderItem(order, template);
 
+                NLogger.info("Order placed: " + order.getItem().getType().name() + " " + orderItem.getItemMeta().getItemFlags());
                 setItem(slot, orderItem, e -> {
+                    ;
                     handleOrderClick(order, e.getWhoClicked());
                 });
             }
@@ -210,12 +214,16 @@ public class MainOrderMenu extends FastInv {
         }
 
         ItemStack itemStack = order.getItem();
-        Map<Enchantment, Integer> enchantments = new HashMap<>();
+        Map<Enchantment, Integer> enchantments;
         if (itemStack != null) {
             ItemMeta meta = itemStack.getItemMeta();
             if (meta != null) {
                 enchantments = meta.getEnchants();
+            } else {
+                enchantments = new HashMap<>();
             }
+        } else {
+            enchantments = new HashMap<>();
         }
 
         String nameTemplate = template.getString("name", "&f&lSipariş");
@@ -239,14 +247,39 @@ public class MainOrderMenu extends FastInv {
             }
         }
 
-        return ItemBuilder.builder()
-                .material(material)
-                .displayName(ColorUtil.hexColor(name))
-                .glow(order.isHighlight())
-                .enchantments(enchantments)
-                .lore(lore.stream().map(ColorUtil::hexColor).toList())
-                .itemFlags(itemFlags)
-                .build().build();
+        ItemStack item = new ItemStack(material, 1);
+        item.editMeta(meta -> {
+            meta.setDisplayName(ColorUtil.hexColor(name));
+            meta.setLore(lore.stream().map(ColorUtil::hexColor).toList());
+
+            if (order.isHighlight()) {
+                meta.addEnchant(Enchantment.FLAME, 1, true);
+                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            }
+
+            if (!enchantments.isEmpty()) {
+                for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+                    meta.addEnchant(entry.getKey(), entry.getValue(), true);
+                }
+            }
+
+            for (ItemFlag flag : itemFlags) {
+                meta.addItemFlags(flag);
+            }
+
+            if (itemFlags.contains(ItemFlag.HIDE_ATTRIBUTES)) {
+                meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+
+                meta.setAttributeModifiers(ArrayListMultimap.create());
+            }
+
+            try {
+                meta.addItemFlags(ItemFlag.valueOf("HIDE_ADDITIONAL_TOOLTIP"));
+            } catch (IllegalArgumentException ignored) {
+            }
+        });
+
+        return item;
     }
 
 
