@@ -39,6 +39,11 @@ settings:
   send-webhooks: false
   min-price-per-item: 0.01
   max-price-per-item: 1000
+  # Broadcast settings for new orders
+  broadcast:
+    enabled: true
+    # Minimum total price for broadcast (price * amount)
+    min-total-price: 1000
 
 number-format:
   suffixes:
