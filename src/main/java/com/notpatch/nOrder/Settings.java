@@ -43,6 +43,9 @@ public class Settings {
     public static String PROGRESS_BAR_COMPLETE_COLOR;
     public static String PROGRESS_BAR_INCOMPLETE_COLOR;
 
+    public static boolean BROADCAST_ENABLED;
+    public static double BROADCAST_MIN_TOTAL_PRICE;
+
 
     public static void loadSettings() {
         Configuration config = NOrder.getInstance().getConfig();
@@ -91,6 +94,9 @@ public class Settings {
         PROGRESS_BAR_INCOMPLETE_CHAR = config.getString("progress-bar.incomplete-symbol", "░").charAt(0);
         PROGRESS_BAR_COMPLETE_COLOR = config.getString("progress-bar.complete-color", "&a");
         PROGRESS_BAR_INCOMPLETE_COLOR = config.getString("progress-bar.incomplete-color", "&7");
+
+        BROADCAST_ENABLED = config.getBoolean("settings.broadcast.enabled", true);
+        BROADCAST_MIN_TOTAL_PRICE = config.getDouble("settings.broadcast.min-total-price", 1000);
 
         NOrder.getInstance().getMorePaperLib().scheduling().asyncScheduler().run(() -> {
             List<Material> items = Arrays.stream(Material.values())
