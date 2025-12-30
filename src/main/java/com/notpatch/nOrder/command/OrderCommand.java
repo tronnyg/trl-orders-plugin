@@ -187,8 +187,7 @@ public class OrderCommand implements BasicCommand {
             }
             
             // Step 8: Check player balance BEFORE creating the order (only for non-admins)
-            OfflinePlayer offlinePlayer = player;
-            if (NOrder.getInstance().getEconomy().getBalance(offlinePlayer) < totalPrice) {
+            if (NOrder.getInstance().getEconomy().getBalance(player) < totalPrice) {
                 player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("not-enough-money")));
                 NSound.error(player);
                 return;

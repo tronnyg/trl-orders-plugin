@@ -83,6 +83,12 @@ blacklist-items:
 | Command | Aliases | Description | Permission |
 |---------|---------|-------------|------------|
 | `/order` | `/norder`, `/sipariş` | Open the order menu | `norder.use` |
+| `/order create <item> <quantity> <price>` | | Create an order directly from command | `norder.menu` |
+
+**Command Examples:**
+- `/order create DIAMOND 64 10.5` - Create an order for 64 diamonds at $10.50 each
+- `/order create IRON_INGOT 128 5` - Create an order for 128 iron ingots at $5.00 each
+- `/order create NETHERITE_INGOT 16 100.25` - Create an order for 16 netherite ingots at $100.25 each
 
 ### Admin Commands
 
@@ -107,6 +113,7 @@ blacklist-items:
 
 ### Creating an Order
 
+#### Method 1: Using the GUI Menu
 1. Run `/order` to open the order menu
 2. Click "Create New Order"
 3. Select the item you want to order
@@ -115,7 +122,14 @@ blacklist-items:
 6. (Optional) Enable highlighting for better visibility
 7. Click "Confirm Order"
 
-The total cost will be deducted from your balance when the order is created.
+#### Method 2: Using the Command (Quick Method)
+Run `/order create <item> <quantity> <price>` directly:
+- Example: `/order create DIAMOND 64 10.5`
+- This creates an order for 64 diamonds at $10.50 per diamond ($672 total)
+- The command automatically validates all inputs and deducts the total cost from your balance
+- Tab completion helps you find item names
+
+**Note:** The total cost will be deducted from your balance when the order is created.
 
 ### Fulfilling Orders
 
