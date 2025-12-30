@@ -121,6 +121,12 @@ public class OrderCommand implements BasicCommand {
                 NSound.error(player);
                 return;
             }
+            // Check for reasonable quantity to prevent overflow
+            if (quantity > 1000000) {
+                player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("invalid-quantity")));
+                NSound.error(player);
+                return;
+            }
         } catch (NumberFormatException e) {
             player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("invalid-quantity")));
             NSound.error(player);
@@ -179,14 +185,14 @@ public class OrderCommand implements BasicCommand {
                 NSound.error(player);
                 return;
             }
-        }
-
-        // Step 8: Check player balance BEFORE creating the order
-        OfflinePlayer offlinePlayer = player;
-        if (NOrder.getInstance().getEconomy().getBalance(offlinePlayer) < totalPrice) {
-            player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("not-enough-money")));
-            NSound.error(player);
-            return;
+            
+            // Step 8: Check player balance BEFORE creating the order (only for non-admins)
+            OfflinePlayer offlinePlayer = player;
+            if (NOrder.getInstance().getEconomy().getBalance(offlinePlayer) < totalPrice) {
+                player.sendMessage(ColorUtil.hexColor(LanguageLoader.getMessage("not-enough-money")));
+                NSound.error(player);
+                return;
+            }
         }
 
         // All validations passed - now create the order
