@@ -15,6 +15,7 @@ public class Order {
     private final UUID playerId;
     private final String playerName;
     private final ItemStack item;
+    private final String customItemId;
     private final int amount;
     private final double price;
     private int delivered;
@@ -23,6 +24,10 @@ public class Order {
     private final LocalDateTime expirationDate;
     private final boolean highlight;
     private OrderStatus status;
+
+    public boolean isCustomItem() {
+        return customItemId != null && !customItemId.isEmpty();
+    }
 
 
     public int getRemaining() {
