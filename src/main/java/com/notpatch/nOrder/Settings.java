@@ -3,6 +3,7 @@ package com.notpatch.nOrder;
 import org.bukkit.Material;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -45,6 +46,10 @@ public class Settings {
 
     public static boolean BROADCAST_ENABLED;
     public static double BROADCAST_MIN_TOTAL_PRICE;
+
+    public static boolean ITEMSADDER_ENABLED;
+    public static List<ItemStack> customItems = new ArrayList<>();
+    public static Map<String, ItemStack> customItemsCache = new HashMap<>();
 
 
     public static void loadSettings() {
@@ -98,6 +103,10 @@ public class Settings {
         BROADCAST_ENABLED = config.getBoolean("settings.broadcast.enabled", true);
         BROADCAST_MIN_TOTAL_PRICE = config.getDouble("settings.broadcast.min-total-price", 1000);
 
+        ITEMSADDER_ENABLED = config.getBoolean("settings.itemsadder-support", true);
+
+        loadCustomItems();
+
         NOrder.getInstance().getMorePaperLib().scheduling().asyncScheduler().run(() -> {
             List<Material> items = Arrays.stream(Material.values())
                     .filter(m -> !m.isAir() && m.isItem() && !m.isLegacy())
@@ -106,6 +115,51 @@ public class Settings {
 
             NOrder.getInstance().getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> availableItems = items);
         });
+    }
+
+
+    private static void loadCustomItems() {
+        customItems.clear();
+        customItemsCache.clear();
+
+        if (!ITEMSADDER_ENABLED) {
+            return;
+        }
+
+        if (!NOrder.getInstance().getItemsAdderHook().isAvailable()) {
+            return;
+        }
+
+        Configuration customItemsConfig = NOrder.getInstance()
+                .getConfigurationManager()
+                .getCustomItemConfiguration()
+                .getConfiguration();
+
+        List<String> itemIds = customItemsConfig.getStringList("items");
+
+        if (itemIds.isEmpty()) {
+            return;
+        }
+
+        customItems = NOrder.getInstance().getItemsAdderHook().getCustomItemsFromIds(itemIds);
+
+        if (!customItems.isEmpty()) {
+            for (ItemStack item : customItems) {
+                String customId = NOrder.getInstance().getItemsAdderHook().getCustomItemId(item);
+                if (customId != null) {
+                    customItemsCache.put(customId, item.clone());
+                }
+            }
+            NOrder.getInstance().getLogger().info("✓ Cached " + customItemsCache.size() + " custom items");
+        }
+    }
+
+    public static ItemStack getCustomItemFromCache(String customItemId) {
+        if (customItemId == null || customItemsCache.isEmpty()) {
+            return null;
+        }
+        ItemStack cached = customItemsCache.get(customItemId);
+        return cached != null ? cached.clone() : null;
     }
 
     /**
