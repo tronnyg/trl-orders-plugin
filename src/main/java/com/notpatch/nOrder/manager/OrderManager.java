@@ -55,6 +55,8 @@ public class OrderManager {
                 Material material = Material.valueOf(materialName);
                 ItemStack item = new ItemStack(material);
 
+                String customItemId = rs.getString("custom_item_id");
+
                 String enchantmentsStr = rs.getString("enchantments");
                 if (enchantmentsStr != null && !enchantmentsStr.isEmpty()) {
                     try {
@@ -62,7 +64,7 @@ public class OrderManager {
                         for (String pair : enchantPairs) {
                             String[] parts = pair.split(":");
                             if (parts.length == 2) {
-                                Enchantment enchant = Enchantment.getByName(parts[0]);
+                                Enchantment enchant = Enchantment.getByKey(org.bukkit.NamespacedKey.minecraft(parts[0]));
                                 int level = Integer.parseInt(parts[1]);
                                 if (enchant != null) {
                                     if (material == Material.ENCHANTED_BOOK) {
@@ -93,7 +95,7 @@ public class OrderManager {
 
                 if (status.equalsIgnoreCase("ARCHIVED")) continue;
 
-                Order order = new Order(orderId, playerId, playerName, item, amount, price, createdAt, expiresAt, highlight);
+                Order order = new Order(orderId, playerId, playerName, item, customItemId, amount, price, createdAt, expiresAt, highlight);
                 order.setStatus(OrderStatus.valueOf(status));
                 order.setDelivered(delivered);
                 order.setCollected(collected);
@@ -115,8 +117,8 @@ public class OrderManager {
             return;
         }
         String sql = """
-                INSERT INTO orders (order_id, player_id, player_name, material, enchantments, amount, price, delivered, collected, created_at, expires_at, highlight, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO orders (order_id, player_id, player_name, material, custom_item_id, enchantments, amount, price, delivered, collected, created_at, expires_at, highlight, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
                 delivered = VALUES(delivered),
                 collected = VALUES(collected),
@@ -125,8 +127,8 @@ public class OrderManager {
 
         if (main.getDatabaseManager().isUsingSQLite()) {
             sql = """
-                    INSERT OR REPLACE INTO orders (order_id, player_id, player_name, material, enchantments, amount, price, delivered, collected, created_at, expires_at, highlight, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT OR REPLACE INTO orders (order_id, player_id, player_name, material, custom_item_id, enchantments, amount, price, delivered, collected, created_at, expires_at, highlight, status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """;
         }
 
@@ -140,18 +142,19 @@ public class OrderManager {
                     stmt.setString(2, order.getPlayerId().toString());
                     stmt.setString(3, order.getPlayerName());
                     stmt.setString(4, order.getMaterial().name());
+                    stmt.setString(5, order.getCustomItemId()); // custom_item_id
 
                     String enchantments = formatEnchantments(order.getItem());
-                    stmt.setString(5, enchantments);
+                    stmt.setString(6, enchantments);
 
-                    stmt.setInt(6, order.getAmount());
-                    stmt.setDouble(7, order.getPrice());
-                    stmt.setInt(8, order.getDelivered());
-                    stmt.setInt(9, order.getCollected());
-                    stmt.setTimestamp(10, Timestamp.valueOf(order.getCreatedAt()));
-                    stmt.setTimestamp(11, Timestamp.valueOf(order.getExpirationDate()));
-                    stmt.setBoolean(12, order.isHighlight());
-                    stmt.setString(13, order.getStatus().name());
+                    stmt.setInt(7, order.getAmount());
+                    stmt.setDouble(8, order.getPrice());
+                    stmt.setInt(9, order.getDelivered());
+                    stmt.setInt(10, order.getCollected());
+                    stmt.setTimestamp(11, Timestamp.valueOf(order.getCreatedAt()));
+                    stmt.setTimestamp(12, Timestamp.valueOf(order.getExpirationDate()));
+                    stmt.setBoolean(13, order.isHighlight());
+                    stmt.setString(14, order.getStatus().name());
 
                     stmt.addBatch();
                 }
