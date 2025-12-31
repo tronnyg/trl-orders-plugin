@@ -1,0 +1,19 @@
+# Custom Items Configuration for ItemsAdder Integration
+#
+# If you don't use ItemsAdder, you can ignore this file.
+# If you do use ItemsAdder, add your custom item namespace IDs here.
+# These items will appear in the order menu alongside vanilla items.
+#
+# Format: "namespace:item_id"
+# Example: "itemsadder:ruby" or "mypack:custom_sword"
+#
+# Make sure ItemsAdder support is enabled in config.yml:
+# settings.itemsadder-support: true
+
+items:
+  - "itemsadder:ruby"
+  - "itemsadder:amethyst"
+  - "itemsadder:custom_sword"
+  # Add more custom items below:
+  # - "itemsadder:your_item_id"
+  # - "yournamespace:item_name"
