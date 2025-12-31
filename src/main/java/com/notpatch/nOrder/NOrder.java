@@ -4,6 +4,8 @@ import com.notpatch.nOrder.command.OrderAdminCommand;
 import com.notpatch.nOrder.command.OrderCommand;
 import com.notpatch.nOrder.database.DatabaseManager;
 import com.notpatch.nOrder.gui.NewOrderMenu;
+import com.notpatch.nOrder.hook.ItemsAdderHook;
+import com.notpatch.nOrder.hook.LuckPermsHook;
 import com.notpatch.nOrder.hook.Metrics;
 import com.notpatch.nOrder.hook.PlaceholderHook;
 import com.notpatch.nOrder.listener.ChatInputListener;
@@ -54,6 +56,12 @@ public final class NOrder extends JavaPlugin {
     @Getter
     private OrderLogger orderLogger;
 
+    @Getter
+    private LuckPermsHook luckPermsHook;
+
+    @Getter
+    private ItemsAdderHook itemsAdderHook;
+
     @Override
     public void onEnable() {
         instance = this;
@@ -64,7 +72,7 @@ public final class NOrder extends JavaPlugin {
         compatibility.
                 checkBukkit("Paper", "Purpur", "Leaf", "Folia")
                 .checkVersion("1.21.4", "1.21.10")
-                .checkPlugin("PlaceholderAPI", true)
+                .checkPlugin("PlaceholderAPI", false)
                 .onSuccess(() -> {
                     new PlaceholderHook(this).register();
                 })
@@ -78,14 +86,23 @@ public final class NOrder extends JavaPlugin {
                         return;
                     }
                     economy = rsp.getProvider();
+                })
+                .checkPlugin("LuckPerms", false)
+                .onSuccess(() -> {
+                    luckPermsHook = new LuckPermsHook();
+                })
+                .checkPlugin("ItemsAdder", false)
+                .onSuccess(() -> {
+                    itemsAdderHook = new ItemsAdderHook();
                 });
+
+        compatibility.validate();
 
         saveDefaultConfig();
         saveConfig();
 
-        Settings.loadSettings();
-
-
+        configurationManager = new ConfigurationManager();
+        configurationManager.loadConfigurations();
 
         databaseManager = new DatabaseManager(this);
         databaseManager.connect();
@@ -101,16 +118,13 @@ public final class NOrder extends JavaPlugin {
 
         orderManager.startCleanupTask();
 
-        configurationManager = new ConfigurationManager();
-        configurationManager.loadConfigurations();
-
         languageLoader = new LanguageLoader();
         languageLoader.loadLangs();
 
         webhookManager = new WebhookManager(this);
         webhookManager.loadWebhooks();
 
-        compatibility.validate();
+        Settings.loadSettings();
 
         chatInputManager = new ChatInputManager();
 
