@@ -28,6 +28,7 @@ public class ItemSelectMenu extends FastInv {
     private final NewOrderMenu parentMenu;
     private int currentPage = 1;
     private final List<Material> availableItems;
+    private final List<ItemStack> customItems;
     private final List<Integer> itemSlots;
     private final int itemsPerPage;
     private String searchQuery = "";
@@ -41,6 +42,8 @@ public class ItemSelectMenu extends FastInv {
         Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
 
         this.availableItems = Settings.availableItems;
+
+        this.customItems = Settings.customItems;
 
         List<String> slotsStr = config.getStringList("item-select-menu.item-slots");
         this.itemSlots = slotsStr.stream()
@@ -87,29 +90,42 @@ public class ItemSelectMenu extends FastInv {
             setItem(slot, null);
         }
 
-        List<Material> filteredItems = getFilteredItems();
+        List<Object> allItems = new ArrayList<>(getFilteredItems());
+
+        if (Settings.ITEMSADDER_ENABLED && !customItems.isEmpty()) {
+            allItems.addAll(getFilteredCustomItems());
+        }
+
         int startIndex = (currentPage - 1) * itemsPerPage;
-        int endIndex = Math.min(startIndex + itemsPerPage, filteredItems.size());
+        int endIndex = Math.min(startIndex + itemsPerPage, allItems.size());
 
         for (int i = 0; i < itemsPerPage && startIndex + i < endIndex; i++) {
             if (i >= itemSlots.size()) break;
 
             int slot = itemSlots.get(i);
-            Material material = filteredItems.get(startIndex + i);
+            Object itemObj = allItems.get(startIndex + i);
 
-            setItem(slot, createItemButton(material), e -> {
-                if (material.name().contains("ENCHANTED") || canBeEnchanted(material)) {
-                    parentMenu.setSelectedItem(material);
-                    new EnchantSelectMenu(parentMenu, material).open((Player) e.getWhoClicked());
-                } else {
-                    parentMenu.setSelectedItem(material);
+            if (itemObj instanceof Material material) {
+                setItem(slot, createItemButton(material), e -> {
+                    if (material.name().contains("ENCHANTED") || canBeEnchanted(material)) {
+                        parentMenu.setSelectedItem(material);
+                        new EnchantSelectMenu(parentMenu, material).open((Player) e.getWhoClicked());
+                    } else {
+                        parentMenu.setSelectedItem(material);
+                        parentMenu.updateMenuItems();
+                        parentMenu.open((Player) e.getWhoClicked());
+                    }
+                });
+            } else if (itemObj instanceof ItemStack customItem) {
+                setItem(slot, createCustomItemButton(customItem), e -> {
+                    parentMenu.setSelectedItem(customItem);
                     parentMenu.updateMenuItems();
                     parentMenu.open((Player) e.getWhoClicked());
-                }
-            });
+                });
+            }
         }
 
-        updateNavigationButtons(filteredItems.size());
+        updateNavigationButtons(allItems.size());
     }
 
     private void updateNavigationButtons(int totalItems) {
@@ -230,6 +246,56 @@ public class ItemSelectMenu extends FastInv {
                 .filter(m -> formatMaterialName(m).toLowerCase()
                         .contains(searchQuery.toLowerCase()))
                 .collect(Collectors.toList());
+    }
+
+    private List<ItemStack> getFilteredCustomItems() {
+        if (searchQuery.isEmpty()) {
+            return customItems;
+        }
+
+        return customItems.stream()
+                .filter(item -> {
+                    String displayName = ItemStackHelper.getItemDisplayName(item);
+                    String customId = main.getItemsAdderHook().getCustomItemId(item);
+
+                    return displayName.toLowerCase().contains(searchQuery.toLowerCase()) ||
+                            (customId != null && customId.toLowerCase().contains(searchQuery.toLowerCase()));
+                })
+                .collect(Collectors.toList());
+    }
+
+    private ItemStack createCustomItemButton(ItemStack customItem) {
+        Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
+        ConfigurationSection template = config.getConfigurationSection("item-select-menu.items.select-item-template");
+
+        ItemStack button = customItem.clone();
+
+        if (template != null) {
+            button.editMeta(meta -> {
+                String customId = main.getItemsAdderHook().getCustomItemId(customItem);
+                String displayName = ItemStackHelper.getItemDisplayName(customItem);
+
+                String name = ColorUtil.hexColor(template.getString("name", "&f%item_name%")
+                        .replace("%item_name%", displayName));
+                meta.setDisplayName(name);
+
+                List<String> lore = template.getStringList("lore").stream()
+                        .map(line -> ColorUtil.hexColor(line
+                                .replace("%item_id%", customId != null ? customId : "")
+                                .replace("%item_name%", displayName)))
+                        .collect(Collectors.toList());
+                meta.setLore(lore);
+
+                for (String flagStr : template.getStringList("item-flags")) {
+                    try {
+                        meta.addItemFlags(ItemFlag.valueOf(flagStr));
+                    } catch (IllegalArgumentException ignored) {
+                    }
+                }
+            });
+        }
+
+        return button;
     }
 
 
