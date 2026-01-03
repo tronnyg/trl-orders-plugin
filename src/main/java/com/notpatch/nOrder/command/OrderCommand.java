@@ -44,7 +44,7 @@ public class OrderCommand implements BasicCommand {
                 if (split[0].equalsIgnoreCase("id")) {
                     Order order = NOrder.getInstance().getOrderManager().getOrderById(split[1]);
                     if (order != null) {
-                        if (order.getPlayerId() == player.getUniqueId()) {
+                        if (order.isOwner(player)) {
                             new OrderTakeMenu(order).open(player);
                             NSound.click(player);
                             return;
@@ -184,9 +184,9 @@ public class OrderCommand implements BasicCommand {
         ItemStack item = new ItemStack(material);
 
         String customItemId = null;
-        if (NOrder.getInstance().getItemsAdderHook() != null &&
-                NOrder.getInstance().getItemsAdderHook().isAvailable()) {
-            customItemId = NOrder.getInstance().getItemsAdderHook().getCustomItemId(item);
+        if (NOrder.getInstance().getCustomItemManager() != null &&
+                NOrder.getInstance().getCustomItemManager().hasAnyProvider()) {
+            customItemId = NOrder.getInstance().getCustomItemManager().getCustomItemId(item);
         }
 
         Order order = new Order(id, player.getUniqueId(), player.getName(), item, customItemId, quantity, pricePerItem, now, expireAt, false);
