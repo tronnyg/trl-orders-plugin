@@ -1,5 +1,6 @@
 package com.notpatch.nOrder.gui;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.notpatch.nOrder.LanguageLoader;
 import com.notpatch.nOrder.NOrder;
 import com.notpatch.nOrder.Settings;
@@ -15,14 +16,19 @@ import lombok.Setter;
 import org.bukkit.Material;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class YourOrdersMenu extends FastInv {
 
@@ -138,12 +144,23 @@ public class YourOrdersMenu extends FastInv {
 
         List<String> loreTemplate = template.getStringList("lore");
         List<String> lore = new ArrayList<>();
-
         for (String line : loreTemplate) {
             lore.add(StringUtil.replaceOrderPlaceholders(line, order));
         }
 
+        List<String> flags = template.getStringList("item-flags");
+        List<ItemFlag> itemFlags = new ArrayList<>();
+        for (String flag : flags) {
+            try {
+                String formattedFlag = flag.toUpperCase().replace("-", "_");
+                ItemFlag itemFlag = ItemFlag.valueOf(formattedFlag);
+                itemFlags.add(itemFlag);
+            } catch (IllegalArgumentException e) {
+            }
+        }
+
         ItemStack item;
+        Map<Enchantment, Integer> enchantments = new HashMap<>();
 
         if (order.isCustomItem()) {
             item = Settings.getCustomItemFromCache(order.getCustomItemId());
@@ -154,20 +171,65 @@ public class YourOrdersMenu extends FastInv {
 
             item.setAmount(1);
 
-            item.editMeta(meta -> {
-                meta.setDisplayName(ColorUtil.hexColor(name));
-                meta.setLore(lore.stream().map(ColorUtil::hexColor).toList());
-            });
+            ItemMeta originalMeta = item.getItemMeta();
+            if (originalMeta != null) {
+                enchantments = originalMeta.getEnchants();
+            }
         } else {
             String materialStr = template.getString("material", "PAPER");
-            Material material = Material.valueOf(materialStr.replace("%material%", order.getMaterial().name()));
+            if (materialStr.equals("%material%")) {
+                materialStr = order.getMaterial().name();
+            }
 
-            item = ItemStackHelper.builder()
-                    .material(material)
-                    .displayName(ColorUtil.hexColor(name))
-                    .lore(lore.stream().map(ColorUtil::hexColor).toList())
-                    .build();
+            Material material;
+            try {
+                material = Material.valueOf(materialStr);
+            } catch (IllegalArgumentException e) {
+                material = Material.PAPER;
+            }
+
+            item = new ItemStack(material, 1);
+
+            ItemStack orderItem = order.getItem();
+            if (orderItem != null) {
+                ItemMeta meta = orderItem.getItemMeta();
+                if (meta != null) {
+                    enchantments = meta.getEnchants();
+                }
+            }
         }
+
+        Map<Enchantment, Integer> finalEnchantments = enchantments;
+        item.editMeta(meta -> {
+            meta.setDisplayName(ColorUtil.hexColor(name));
+            meta.setLore(lore.stream().map(ColorUtil::hexColor).toList());
+
+            if (order.isHighlight()) {
+                meta.addEnchant(Enchantment.FLAME, 1, true);
+                meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+            }
+
+            if (!finalEnchantments.isEmpty()) {
+                for (Map.Entry<Enchantment, Integer> entry : finalEnchantments.entrySet()) {
+                    meta.addEnchant(entry.getKey(), entry.getValue(), true);
+                }
+            }
+
+            for (ItemFlag flag : itemFlags) {
+                meta.addItemFlags(flag);
+            }
+
+            if (itemFlags.contains(ItemFlag.HIDE_ATTRIBUTES)) {
+                meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+
+                meta.setAttributeModifiers(ArrayListMultimap.create());
+            }
+
+            try {
+                meta.addItemFlags(ItemFlag.valueOf("HIDE_ADDITIONAL_TOOLTIP"));
+            } catch (IllegalArgumentException ignored) {
+            }
+        });
 
         return item;
     }
@@ -196,6 +258,9 @@ public class YourOrdersMenu extends FastInv {
         } else {
             main.getChatInputManager().cancelInput(player);
         }
+        main.getMorePaperLib().scheduling().globalRegionalScheduler().runDelayed(() -> {
+            new YourOrdersMenu(player).open(player);
+        }, 5L);
     }
 
     private void updatePaginationButtons(int totalOrders) {
