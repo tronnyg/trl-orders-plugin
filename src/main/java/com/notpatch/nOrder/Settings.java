@@ -1,6 +1,9 @@
 package com.notpatch.nOrder;
 
-import com.notpatch.nOrder.hook.ItemsAdderHook;
+import com.notpatch.nOrder.hook.customitem.CustomItemProvider;
+import com.notpatch.nOrder.hook.customitem.NexoProvider;
+import com.notpatch.nOrder.manager.CustomItemManager;
+import com.notpatch.nlib.util.NLogger;
 import org.bukkit.Material;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
@@ -37,6 +40,7 @@ public class Settings {
 
     public static String HIGHLIGHT_PERMISSION;
 
+    public static boolean DEBUG;
     public static List<Material> availableItems = new ArrayList<>();
 
     public static int PROGRESS_BAR_LENGTH;
@@ -48,7 +52,7 @@ public class Settings {
     public static boolean BROADCAST_ENABLED;
     public static double BROADCAST_MIN_TOTAL_PRICE;
 
-    public static boolean ITEMSADDER_ENABLED;
+    public static boolean CUSTOM_ITEM_ENABLED;
     public static List<ItemStack> customItems = new ArrayList<>();
     public static Map<String, ItemStack> customItemsCache = new HashMap<>();
 
@@ -90,6 +94,7 @@ public class Settings {
         DATE_FORMAT = config.getString("date-format", "MM-dd HH:mm:ss");
         HIGHLIGHT_PERMISSION = config.getString("permissions.use-highlight", "norder.highlight");
         ORDER_EXPIRATION_PERMISSION = config.getString("permissions.order-expiration", "norder.expiration");
+        DEBUG = config.getBoolean("settings.debug", false);
         List<Material> blacklist = config.getStringList("blacklist-items").stream()
                 .map(Material::matchMaterial)
                 .filter(Objects::nonNull)
@@ -104,9 +109,7 @@ public class Settings {
         BROADCAST_ENABLED = config.getBoolean("settings.broadcast.enabled", true);
         BROADCAST_MIN_TOTAL_PRICE = config.getDouble("settings.broadcast.min-total-price", 1000);
 
-        ITEMSADDER_ENABLED = config.getBoolean("settings.itemsadder-support", true);
-
-        loadCustomItems();
+        CUSTOM_ITEM_ENABLED = config.getBoolean("settings.custom-item-support", true);
 
         NOrder.getInstance().getMorePaperLib().scheduling().asyncScheduler().run(() -> {
             List<Material> items = Arrays.stream(Material.values())
@@ -119,17 +122,29 @@ public class Settings {
     }
 
 
-    private static void loadCustomItems() {
+    public static void loadCustomItems() {
         customItems.clear();
         customItemsCache.clear();
 
-        if (!ITEMSADDER_ENABLED) {
+        if (!CUSTOM_ITEM_ENABLED) {
+            if (DEBUG) {
+                NLogger.info("✗ Custom item support is disabled in config.yml");
+            }
             return;
         }
 
-        ItemsAdderHook itemsAdderHook = NOrder.getInstance().getItemsAdderHook();
-        if (itemsAdderHook == null || !itemsAdderHook.isAvailable()) {
+        CustomItemManager customItemManager = NOrder.getInstance().getCustomItemManager();
+        if (customItemManager == null || !customItemManager.hasAnyProvider()) {
+            if (DEBUG) {
+                NLogger.info("✗ No custom item providers available, skipping custom item loading");
+            }
             return;
+        }
+
+        for (CustomItemProvider itemProvider : customItemManager.getProviders()) {
+            if (itemProvider instanceof NexoProvider nexoProvider) {
+                if (!nexoProvider.isInitialized()) return;
+            }
         }
 
         Configuration customItemsConfig = NOrder.getInstance()
@@ -140,19 +155,29 @@ public class Settings {
         List<String> itemIds = customItemsConfig.getStringList("items");
 
         if (itemIds.isEmpty()) {
+            if (DEBUG) {
+                NLogger.info("✗ No custom items defined in customitems.yml");
+            }
             return;
         }
 
-        customItems = NOrder.getInstance().getItemsAdderHook().getCustomItemsFromIds(itemIds);
+        if (DEBUG) {
+            NLogger.info("Loading " + itemIds.size() + " custom item(s) from customitems.yml...");
+        }
+        customItems = customItemManager.getCustomItemsFromIds(itemIds);
 
         if (!customItems.isEmpty()) {
             for (ItemStack item : customItems) {
-                String customId = NOrder.getInstance().getItemsAdderHook().getCustomItemId(item);
+                String customId = customItemManager.getCustomItemId(item);
                 if (customId != null) {
                     customItemsCache.put(customId, item.clone());
                 }
             }
-            NOrder.getInstance().getLogger().info("✓ Cached " + customItemsCache.size() + " custom items");
+            NLogger.info("✓ Cached " + customItemsCache.size() + " custom items");
+        } else {
+            if (DEBUG) {
+                NLogger.info("✗ Failed to load any custom items from customitems.yml");
+            }
         }
     }
 
