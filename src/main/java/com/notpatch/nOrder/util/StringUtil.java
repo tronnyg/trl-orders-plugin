@@ -33,7 +33,7 @@ public class StringUtil {
         }
 
         return text
-                .replace("%item%", order.getMaterial().name())
+                .replace("%item%", formatMaterialName(order.getMaterial()))
                 .replace("%material%", formatMaterialName(order.getMaterial()))
                 .replace("%quantity%", String.valueOf(order.getAmount()))
                 .replace("%amount%", String.valueOf(order.getAmount()))
