@@ -36,12 +36,14 @@ commands:
       - "siparişadmin"
 
 settings:
+  # Enable debug mode for detailed logging
+  debug: true
   highlight-fee: 2.5
   send-webhooks: false
   min-price-per-item: 0.01
   max-price-per-item: 1000
-  # Enable ItemsAdder custom items support
-  itemsadder-support: true
+  # MMOItems, ItemsAdder, Nexo Items support
+  custom-item-support: true
   # Broadcast settings for new orders
   broadcast:
     enabled: true
