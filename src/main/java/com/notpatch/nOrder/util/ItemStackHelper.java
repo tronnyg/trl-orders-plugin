@@ -19,14 +19,14 @@ public class ItemStackHelper {
     public static boolean isSameItem(ItemStack item1, ItemStack item2) {
         if (item1 == null || item2 == null) return false;
 
-        if (NOrder.getInstance().getItemsAdderHook() != null &&
-                NOrder.getInstance().getItemsAdderHook().isAvailable()) {
+        if (NOrder.getInstance().getCustomItemManager() != null &&
+                NOrder.getInstance().getCustomItemManager().hasAnyProvider()) {
 
-            boolean isCustom1 = NOrder.getInstance().getItemsAdderHook().isCustomItem(item1);
-            boolean isCustom2 = NOrder.getInstance().getItemsAdderHook().isCustomItem(item2);
+            boolean isCustom1 = NOrder.getInstance().getCustomItemManager().isCustomItem(item1);
+            boolean isCustom2 = NOrder.getInstance().getCustomItemManager().isCustomItem(item2);
 
             if (isCustom1 && isCustom2) {
-                return NOrder.getInstance().getItemsAdderHook().isSameCustomItem(item1, item2);
+                return NOrder.getInstance().getCustomItemManager().isSameCustomItem(item1, item2);
             }
 
             if (isCustom1 != isCustom2) return false;
@@ -95,10 +95,10 @@ public class ItemStackHelper {
     public static String getItemDisplayName(ItemStack item) {
         if (item == null) return "Unknown";
 
-        if (NOrder.getInstance().getItemsAdderHook() != null &&
-                NOrder.getInstance().getItemsAdderHook().isAvailable()) {
+        if (NOrder.getInstance().getCustomItemManager() != null &&
+                NOrder.getInstance().getCustomItemManager().hasAnyProvider()) {
 
-            String customName = NOrder.getInstance().getItemsAdderHook().getCustomItemDisplayName(item);
+            String customName = NOrder.getInstance().getCustomItemManager().getCustomItemDisplayName(item);
             if (customName != null) return customName;
         }
 
