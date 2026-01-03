@@ -4,7 +4,6 @@ import com.notpatch.nOrder.command.OrderAdminCommand;
 import com.notpatch.nOrder.command.OrderCommand;
 import com.notpatch.nOrder.database.DatabaseManager;
 import com.notpatch.nOrder.gui.NewOrderMenu;
-import com.notpatch.nOrder.hook.ItemsAdderHook;
 import com.notpatch.nOrder.hook.LuckPermsHook;
 import com.notpatch.nOrder.hook.Metrics;
 import com.notpatch.nOrder.hook.PlaceholderHook;
@@ -45,6 +44,9 @@ public final class NOrder extends JavaPlugin {
     private ChatInputManager chatInputManager;
 
     @Getter
+    private NewOrderMenuManager newOrderMenuManager;
+
+    @Getter
     private WebhookManager webhookManager;
 
     @Getter
@@ -60,7 +62,7 @@ public final class NOrder extends JavaPlugin {
     private LuckPermsHook luckPermsHook;
 
     @Getter
-    private ItemsAdderHook itemsAdderHook;
+    private CustomItemManager customItemManager;
 
     @Override
     public void onEnable() {
@@ -90,11 +92,7 @@ public final class NOrder extends JavaPlugin {
                 .checkPlugin("LuckPerms", false)
                 .onSuccess(() -> {
                     luckPermsHook = new LuckPermsHook();
-                })
-                .checkPlugin("ItemsAdder", false)
-                .onSuccess(() -> {
-                    itemsAdderHook = new ItemsAdderHook();
-                }).validate();
+                });
 
         saveDefaultConfig();
         saveConfig();
@@ -122,9 +120,16 @@ public final class NOrder extends JavaPlugin {
         webhookManager = new WebhookManager(this);
         webhookManager.loadWebhooks();
 
+        compatibility.validate();
+
         Settings.loadSettings();
 
+        customItemManager = new CustomItemManager();
+
+        Settings.loadCustomItems();
+
         chatInputManager = new ChatInputManager();
+        newOrderMenuManager = new NewOrderMenuManager();
 
         getServer().getPluginManager().registerEvents(new NewOrderMenu(), this);
 
