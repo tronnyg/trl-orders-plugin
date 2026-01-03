@@ -250,6 +250,7 @@ public class OrderAdminCommand implements BasicCommand {
 
         main.getLanguageLoader().loadLangs();
         Settings.loadSettings();
+        Settings.loadCustomItems();
         main.getConfigurationManager().reloadConfigurations();
         main.getWebhookManager().loadWebhooks();
         sender.sendMessage("§aConfigurations reloaded.");
