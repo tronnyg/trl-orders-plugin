@@ -53,12 +53,10 @@
                         </goals>
                         <configuration>
                             <target>
-
                                 <copy file="${project.build.directory}/${project.build.finalName}.jar"
                                       todir="C:/Users/Nitra/Desktop/Minecraft Server/plugins"
                                       overwrite="true"/>
                                 <echo message="Plugin kopyalandı: C:/Users/Nitra/Desktop/Minecraft Server/plugins/${project.build.finalName}.jar"/>
-
                             </target>
                         </configuration>
                     </execution>
