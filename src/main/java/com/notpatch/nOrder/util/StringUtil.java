@@ -36,6 +36,7 @@ public class StringUtil {
                 .replace("%item%", formatMaterialName(order.getMaterial()))
                 .replace("%material%", formatMaterialName(order.getMaterial()))
                 .replace("%quantity%", String.valueOf(order.getAmount()))
+                .replace("%highlighted%", order.isHighlight() ? LanguageLoader.getMessage("highlighted-yes") : LanguageLoader.getMessage("highlighted-no"))
                 .replace("%amount%", String.valueOf(order.getAmount()))
                 .replace("%delivered%", String.valueOf(order.getDelivered()))
                 .replace("%remaining%", String.valueOf(order.getRemaining()))
