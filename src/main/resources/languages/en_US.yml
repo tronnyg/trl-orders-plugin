@@ -41,6 +41,9 @@ order-completion: "&a&l✓ Your order for &f%material% &ahas been completed!"
 order-expiration: "&cYour order for &f%material% &chas expired!"
 order-cancelled: "&cYour order &f%id% &chas been cancelled!"
 
+highlighted-yes: "&aYes"
+highlighted-no: "&cNo"
+
 # Time Format
 order-countdown-format: "%d Days %d Hours %d Minutes %d Seconds"
 
