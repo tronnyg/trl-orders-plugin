@@ -127,7 +127,7 @@ public class ItemStackHelper {
 
     /**
      * Creates an ItemStack from a configuration section.
-     * Supports: material, name, lore, amount, glow, item-flags
+     * Supports: material, name, lore, amount, glow, item-flags, custom-model-data
      */
     public static ItemStack fromSection(ConfigurationSection section) {
         if (section == null) return new ItemStack(Material.STONE);
@@ -170,6 +170,12 @@ public class ItemStackHelper {
                     coloredLore.add(ColorUtil.hexColor(line));
                 }
                 meta.setLore(coloredLore);
+            }
+
+            // Custom model data
+            if (section.contains("custom-model-data") && section.isInt("custom-model-data")) {
+                int customModelData = section.getInt("custom-model-data");
+                meta.setCustomModelData(customModelData);
             }
 
             // Glow effect
