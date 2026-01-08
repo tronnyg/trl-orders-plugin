@@ -41,7 +41,7 @@ public class OrderTakeMenu extends FastInv {
         int stackIndex = 0;
 
         while (remainingItems > 0) {
-            ItemStack item = order.getItem();
+            ItemStack item = order.getItem().clone();
             int stackSize = Math.min(64, remainingItems);
             item.setAmount(stackSize);
             this.deliveredItems.put(stackIndex++, item);
