@@ -31,9 +31,6 @@ public class OrderManager {
     private final NOrder main;
 
     private final Map<UUID, List<Order>> ordersByPlayer = new ConcurrentHashMap<>();
-    
-    private Object cleanupTask;
-    private Object autoSaveTask;
 
     public OrderManager(NOrder main) {
         this.main = main;
@@ -539,7 +536,7 @@ public class OrderManager {
     }
 
     public void startCleanupTask() {
-        cleanupTask = main.getMorePaperLib().scheduling().asyncScheduler().runAtFixedRate(
+        main.getMorePaperLib().scheduling().asyncScheduler().runAtFixedRate(
                 this::cleanExpiredOrders,
                 Duration.ofMinutes(10),
 
@@ -554,21 +551,12 @@ public class OrderManager {
             return;
         }
         
-        autoSaveTask = main.getMorePaperLib().scheduling().asyncScheduler().runAtFixedRate(
+        main.getMorePaperLib().scheduling().asyncScheduler().runAtFixedRate(
                 this::saveOrders,
                 Duration.ofMinutes(intervalMinutes),
                 Duration.ofMinutes(intervalMinutes)
         );
         NLogger.info("Auto-save task started with " + intervalMinutes + " minute interval.");
-    }
-    
-    public void stopTasks() {
-        if (cleanupTask != null) {
-            main.getMorePaperLib().scheduling().cancelGlobalTasks();
-        }
-        if (autoSaveTask != null) {
-            main.getMorePaperLib().scheduling().cancelGlobalTasks();
-        }
     }
 
 }

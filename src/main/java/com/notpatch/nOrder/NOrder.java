@@ -149,10 +149,7 @@ public final class NOrder extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (orderManager != null) {
-            orderManager.stopTasks();
-            orderManager.saveOrders();
-        }
+        if (orderManager != null) orderManager.saveOrders();
         if (playerStatsManager != null) playerStatsManager.saveStatistics();
         if (databaseManager != null) databaseManager.disconnect();
         if (configurationManager != null) configurationManager.saveConfigurations();
