@@ -544,4 +544,19 @@ public class OrderManager {
         );
     }
 
+    public void startAutoSaveTask() {
+        int intervalMinutes = Settings.AUTO_SAVE_INTERVAL_MINUTES;
+        if (intervalMinutes <= 0) {
+            NLogger.warn("Auto-save interval is disabled or invalid. Orders will only be saved on server shutdown.");
+            return;
+        }
+        
+        main.getMorePaperLib().scheduling().asyncScheduler().runAtFixedRate(
+                this::saveOrders,
+                Duration.ofMinutes(intervalMinutes),
+                Duration.ofMinutes(intervalMinutes)
+        );
+        NLogger.info("Auto-save task started with " + intervalMinutes + " minute interval.");
+    }
+
 }
