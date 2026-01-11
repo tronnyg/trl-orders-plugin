@@ -1,3 +1,5 @@
+# discord.minebazaar.net
+
 # NOrder
 
 A comprehensive marketplace plugin for Minecraft Paper servers that allows players to create buy orders for items. Players can place orders for items they need, and other players can fulfill these orders by delivering the requested items for payment.
