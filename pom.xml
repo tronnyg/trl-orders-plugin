@@ -14,6 +14,7 @@
     <properties>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <test-server.path>${project.basedir}/test</test-server.path>
     </properties>
 
     <build>
@@ -47,16 +48,36 @@
                 <version>3.1.0</version>
                 <executions>
                     <execution>
+                        <id>copy-to-test-server</id>
                         <phase>package</phase>
                         <goals>
                             <goal>run</goal>
                         </goals>
                         <configuration>
                             <target>
+                                <!-- Create plugins directory if it doesn't exist -->
+                                <mkdir dir="${test-server.path}/plugins"/>
+
+                                <!-- Delete old version of plugin -->
+                                <delete>
+                                    <fileset dir="${test-server.path}/plugins"
+                                             includes="${project.artifactId}-*. jar"/>
+                                </delete>
+
+                                <!-- Copy new plugin JAR -->
                                 <copy file="${project.build.directory}/${project.build.finalName}.jar"
-                                      todir="C:/Users/Nitra/Desktop/Minecraft Server/plugins"
-                                      overwrite="true"/>
-                                <echo message="Plugin kopyalandı: C:/Users/Nitra/Desktop/Minecraft Server/plugins/${project.build.finalName}.jar"/>
+                                      tofile="${test-server.path}/plugins/${project.build.finalName}.jar"
+                                      overwrite="true"
+                                      verbose="true"/>
+
+                                <!-- Success message -->
+                                <echo message=""/>
+                                <echo message="========================================"/>
+                                <echo message="Plugin copied to test server! "/>
+                                <echo message="Location: ${test-server.path}/plugins/"/>
+                                <echo message="File:  ${project.build.finalName}.jar"/>
+                                <echo message="========================================"/>
+                                <echo message=""/>
                             </target>
                         </configuration>
                     </execution>

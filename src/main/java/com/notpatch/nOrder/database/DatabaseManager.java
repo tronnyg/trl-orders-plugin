@@ -227,6 +227,33 @@ public class DatabaseManager {
         } catch (SQLException e) {
             NLogger.error("Failed to create orders table: " + e.getMessage());
         }
+
+        String createCategoriesTable = """
+    CREATE TABLE IF NOT EXISTS order_categories (
+        category_id VARCHAR(36) PRIMARY KEY,
+        category_name VARCHAR(255) NOT NULL,
+        display_item VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """;
+
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute(createCategoriesTable);
+            NLogger.info("Order categories table ready.");
+        } catch (SQLException e) {
+            NLogger.error("Error creating order_categories table: " + e.getMessage());
+        }
+
+        String addCategoryColumn = usingSQLite ?
+                "ALTER TABLE orders ADD COLUMN category_id VARCHAR(36)" :
+                "ALTER TABLE orders ADD COLUMN category_id VARCHAR(36)";
+
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute(addCategoryColumn);
+        } catch (SQLException e) {
+        }
     }
 
 

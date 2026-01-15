@@ -1,6 +1,7 @@
 package com.notpatch.nOrder;
 
 import com.notpatch.nOrder.command.OrderAdminCommand;
+import com.notpatch.nOrder.command.OrderCategoryCommand;
 import com.notpatch.nOrder.command.OrderCommand;
 import com.notpatch.nOrder.database.DatabaseManager;
 import com.notpatch.nOrder.gui.NewOrderMenu;
@@ -63,6 +64,9 @@ public final class NOrder extends JavaPlugin {
 
     @Getter
     private CustomItemManager customItemManager;
+
+    @Getter
+    private OrderCategoryManager orderCategoryManager;
 
     @Override
     public void onEnable() {
@@ -131,11 +135,15 @@ public final class NOrder extends JavaPlugin {
 
         chatInputManager = new ChatInputManager();
         newOrderMenuManager = new NewOrderMenuManager();
+        orderCategoryManager = new OrderCategoryManager(this);
+        orderCategoryManager.loadCategories();
+
 
         getServer().getPluginManager().registerEvents(new NewOrderMenu(), this);
 
         registerCommand("order", Settings.ORDER_ALIASES, new OrderCommand());
         registerCommand("orderadmin", Settings.ORDER_ADMIN_ALIASES, new OrderAdminCommand());
+        registerCommand("ordercategory", new OrderCategoryCommand());
 
         getServer().getPluginManager().registerEvents(new ChatInputListener(this), this);
 
