@@ -294,7 +294,7 @@ public class OrderAdminCommand implements BasicCommand {
                     }
 
                     OrderCategory category = NOrder.getInstance().getOrderCategoryManager()
-                            .getCategoryByName(categoryID);
+                            .getCategoryById(categoryID);
 
                     if (category == null) {
                         sender.sendMessage(ColorUtil.hexColor("&cCategory not found: " + categoryID));
@@ -422,6 +422,7 @@ public class OrderAdminCommand implements BasicCommand {
             case COMPLETED -> NamedTextColor.BLUE;
             case CANCELLED -> NamedTextColor.RED;
             case ARCHIVED -> NamedTextColor.GRAY;
+            case COOLDOWN -> NamedTextColor.YELLOW;
         };
     }
 

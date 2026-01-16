@@ -96,10 +96,7 @@ public class OrderManager {
 
                 if (status.equalsIgnoreCase("ARCHIVED") || status.equalsIgnoreCase("CANCELLED")) continue;
 
-                Order order = new Order(orderId, playerId, playerName, item, customItemId, amount, price, createdAt, expiresAt, highlight);
-                order.setStatus(OrderStatus.valueOf(status));
-                order.setDelivered(delivered);
-                order.setCollected(collected);
+                Order order = new Order(orderId, playerId, playerName, item, customItemId, amount, price, delivered, collected, createdAt, expiresAt, highlight, OrderStatus.valueOf(status));
 
                 addOrderAdmin(order);
             }

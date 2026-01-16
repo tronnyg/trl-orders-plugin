@@ -4,6 +4,7 @@ import com.notpatch.nOrder.LanguageLoader;
 import com.notpatch.nOrder.NOrder;
 import com.notpatch.nOrder.Settings;
 import com.notpatch.nOrder.model.Order;
+import com.notpatch.nOrder.model.OrderStatus;
 import com.notpatch.nOrder.util.ItemStackHelper;
 import com.notpatch.nOrder.util.PlayerUtil;
 import com.notpatch.nlib.effect.NSound;
@@ -331,7 +332,7 @@ public class NewOrderMenu extends FastInv implements Listener {
                     customItemId = main.getCustomItemManager().getCustomItemId(selectedItem);
                 }
 
-                Order order = new Order(id, player.getUniqueId(), player.getName(), selectedItem, customItemId, quantity, pricePerItem, now, expireAt, isHighlighted);
+                Order order = new Order(id, player.getUniqueId(), player.getName(), selectedItem, customItemId, quantity, pricePerItem, 0, 0, now, expireAt, isHighlighted, OrderStatus.ACTIVE);
 
                 NOrder.getInstance().getOrderManager().addOrder(order);
 

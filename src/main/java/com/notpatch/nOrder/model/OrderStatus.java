@@ -5,5 +5,6 @@ public enum OrderStatus {
     ACTIVE,
     COMPLETED,
     ARCHIVED,
-    CANCELLED
+    CANCELLED,
+    COOLDOWN
 }

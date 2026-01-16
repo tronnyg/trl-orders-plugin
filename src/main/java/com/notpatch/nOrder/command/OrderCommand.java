@@ -7,6 +7,7 @@ import com.notpatch.nOrder.gui.MainOrderMenu;
 import com.notpatch.nOrder.gui.OrderDetailsMenu;
 import com.notpatch.nOrder.gui.OrderTakeMenu;
 import com.notpatch.nOrder.model.Order;
+import com.notpatch.nOrder.model.OrderStatus;
 import com.notpatch.nOrder.util.PlayerUtil;
 import com.notpatch.nlib.effect.NSound;
 import com.notpatch.nlib.util.ColorUtil;
@@ -189,7 +190,7 @@ public class OrderCommand implements BasicCommand {
             customItemId = NOrder.getInstance().getCustomItemManager().getCustomItemId(item);
         }
 
-        Order order = new Order(id, player.getUniqueId(), player.getName(), item, customItemId, quantity, pricePerItem, now, expireAt, false);
+        Order order = new Order(id, player.getUniqueId(), player.getName(), item, customItemId, quantity, pricePerItem, 0, 0, now, expireAt, false, OrderStatus.ACTIVE);
 
         NOrder.getInstance().getOrderManager().addOrder(order);
     }
