@@ -49,8 +49,26 @@ order-countdown-format: "%d Gün %d Saat %d Dakika %d Saniye"
 
 # Admin Messages
 order-not-found: "&cSipariş %id% bulunamadı."
-order-info: "&aSipariş: %id%, Eşya: %item%, Ücret: %price%, Adet: %amount%, Oyuncu: %buyer%, Oluşturuldu: %created_at%, Durum: %status%, Teslim edilen: %delivered%/%amount%"
 order-deleted: "&aSipariş %id% silindi."
+player-no-orders: "&cOyuncu %player% hiç sipariş vermemiş."
+
+# Admin Info Command (Lore Format)
+admin-info-lore:
+  - "&6═══════════ Sipariş Bilgisi ═══════════"
+  - "&7ID: &f%id%"
+  - "&7Sahibi: &f%owner%"
+  - "&7Eşya: &f%item%"
+  - "&7Miktar: &f%amount%"
+  - "&7Birim Fiyat: &f%price%"
+  - "&7Toplam Fiyat: &f%total_price%"
+  - "&7Durum: &f%status%"
+  - "&7Teslim Edilen: &f%delivered%/%amount%"
+  - "&7Toplanan: &f%collected%/%delivered%"
+  - "&7Öne Çıkarılmış: &f%highlight%"
+  - "&7Oluşturulma: &f%created%"
+  - "&7Bitiş: &f%expires%"
+  - "&6═══════════════════════════════════"
+
 
 admin-usage-reload: "&7/orderadmin reload &8- &fYapılandırmaları yeniden yükle"
 admin-usage-info: "&7/orderadmin info <id> &8- &fBir sipariş hakkında ayrıntılı bilgi görüntüle"
