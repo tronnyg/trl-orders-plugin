@@ -149,6 +149,7 @@ public class DatabaseManager {
     }
 
     public void createTables() {
+        // Orders table - for player-created orders (no category_id)
         String createOrderTableMySQL = """
                 CREATE TABLE IF NOT EXISTS orders (
                     order_id VARCHAR(8) NOT NULL PRIMARY KEY,
@@ -165,7 +166,9 @@ public class DatabaseManager {
                     expires_at TIMESTAMP NOT NULL,
                     highlight BOOLEAN DEFAULT FALSE,
                     status VARCHAR(20) DEFAULT 'ACTIVE',
-                    INDEX idx_expires_at (expires_at)
+                    INDEX idx_expires_at (expires_at),
+                    INDEX idx_status (status),
+                    INDEX idx_player_id (player_id)
                 );
                 
                 CREATE TABLE IF NOT EXISTS player_stats (
@@ -175,6 +178,31 @@ public class DatabaseManager {
                     collected_items INT DEFAULT 0,
                     total_orders INT DEFAULT 0,
                     total_earnings DOUBLE DEFAULT 0.0
+                );
+                
+                CREATE TABLE IF NOT EXISTS admin_orders (
+                    order_id VARCHAR(8) NOT NULL PRIMARY KEY,
+                    material VARCHAR(50) NOT NULL,
+                    custom_item_id VARCHAR(100) DEFAULT NULL,
+                    enchantments TEXT DEFAULT NULL,
+                    amount INT NOT NULL,
+                    price DOUBLE NOT NULL,
+                    delivered INT DEFAULT 0,
+                    collected INT DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    expires_at TIMESTAMP NOT NULL,
+                    highlight BOOLEAN DEFAULT FALSE,
+                    status VARCHAR(20) DEFAULT 'ACTIVE',
+                    category_id VARCHAR(36) DEFAULT NULL,
+                    custom_name VARCHAR(255) DEFAULT NULL,
+                    cooldown_duration BIGINT DEFAULT 0,
+                    repeatable BOOLEAN DEFAULT FALSE,
+                    cooldown_ends_at TIMESTAMP DEFAULT NULL,
+                    last_completed_at TIMESTAMP DEFAULT NULL,
+                    INDEX idx_expires_at (expires_at),
+                    INDEX idx_status (status),
+                    INDEX idx_category_id (category_id),
+                    INDEX idx_cooldown_ends_at (cooldown_ends_at)
                 )
                 """;
 
@@ -203,6 +231,27 @@ public class DatabaseManager {
                     collected_items INT DEFAULT 0,
                     total_orders INT DEFAULT 0,
                     total_earnings DOUBLE DEFAULT 0.0
+                );
+                
+                CREATE TABLE IF NOT EXISTS admin_orders (
+                    order_id VARCHAR(8) NOT NULL PRIMARY KEY,
+                    material VARCHAR(50) NOT NULL,
+                    custom_item_id VARCHAR(100) DEFAULT NULL,
+                    enchantments TEXT DEFAULT NULL,
+                    amount INT NOT NULL,
+                    price DOUBLE NOT NULL,
+                    delivered INT DEFAULT 0,
+                    collected INT DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    expires_at TIMESTAMP NOT NULL,
+                    highlight BOOLEAN DEFAULT FALSE,
+                    status VARCHAR(20) DEFAULT 'ACTIVE',
+                    category_id VARCHAR(36) DEFAULT NULL,
+                    custom_name VARCHAR(255) DEFAULT NULL,
+                    cooldown_duration BIGINT DEFAULT 0,
+                    repeatable BOOLEAN DEFAULT FALSE,
+                    cooldown_ends_at TIMESTAMP DEFAULT NULL,
+                    last_completed_at TIMESTAMP DEFAULT NULL
                 )
                 """;
 
@@ -215,17 +264,23 @@ public class DatabaseManager {
             if (usingSQLite) {
                 try {
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_expires_at ON orders(expires_at)");
+                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_status ON orders(status)");
+                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_player_id ON orders(player_id)");
+                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_admin_expires_at ON admin_orders(expires_at)");
+                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_admin_status ON admin_orders(status)");
+                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_admin_category_id ON admin_orders(category_id)");
+                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_admin_cooldown_ends_at ON admin_orders(cooldown_ends_at)");
                 } catch (SQLException e) {
-                    NLogger.warn("Failed to create index on SQLite: " + e.getMessage());
+                    NLogger.warn("Failed to create indexes on SQLite: " + e.getMessage());
                 }
             }
 
-            NLogger.info("Created orders table successfully.");
+            NLogger.info("Created orders and admin_orders tables successfully.");
 
             runMigrations(conn);
 
         } catch (SQLException e) {
-            NLogger.error("Failed to create orders table: " + e.getMessage());
+            NLogger.error("Failed to create tables: " + e.getMessage());
         }
 
         String createCategoriesTable = """
@@ -243,16 +298,6 @@ public class DatabaseManager {
             NLogger.info("Order categories table ready.");
         } catch (SQLException e) {
             NLogger.error("Error creating order_categories table: " + e.getMessage());
-        }
-
-        String addCategoryColumn = usingSQLite ?
-                "ALTER TABLE orders ADD COLUMN category_id VARCHAR(36)" :
-                "ALTER TABLE orders ADD COLUMN category_id VARCHAR(36)";
-
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement()) {
-            stmt.execute(addCategoryColumn);
-        } catch (SQLException e) {
         }
     }
 

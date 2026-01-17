@@ -30,6 +30,9 @@ public final class NOrder extends JavaPlugin {
     private OrderManager orderManager;
 
     @Getter
+    private AdminOrderManager adminOrderManager;
+
+    @Getter
     private PlayerStatisticsManager playerStatsManager;
 
     @Getter
@@ -113,11 +116,17 @@ public final class NOrder extends JavaPlugin {
         orderManager = new OrderManager(this);
         orderManager.loadOrders();
 
+        adminOrderManager = new AdminOrderManager(this);
+        adminOrderManager.loadAdminOrders();
+
         playerStatsManager = new PlayerStatisticsManager(this);
         playerStatsManager.loadStatistics();
 
         orderManager.startCleanupTask();
         orderManager.startAutoSaveTask();
+
+        adminOrderManager.startCooldownTask();
+        adminOrderManager.startCleanupTask();
 
         languageLoader = new LanguageLoader();
         languageLoader.loadLangs();
@@ -158,6 +167,7 @@ public final class NOrder extends JavaPlugin {
     @Override
     public void onDisable() {
         if (orderManager != null) orderManager.saveOrders();
+        if (adminOrderManager != null) adminOrderManager.saveAdminOrders();
         if (playerStatsManager != null) playerStatsManager.saveStatistics();
         if (databaseManager != null) databaseManager.disconnect();
         if (configurationManager != null) configurationManager.saveConfigurations();

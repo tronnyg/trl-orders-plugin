@@ -25,7 +25,7 @@ public class ItemSelectMenu extends FastInv {
 
     private final NOrder main;
 
-    private final NewOrderMenu parentMenu;
+    private final Object parentMenu; // Can be NewOrderMenu or NewAdminOrderMenu
     private int currentPage = 1;
     private final List<Material> availableItems;
     private List<ItemStack> customItems;
@@ -44,6 +44,28 @@ public class ItemSelectMenu extends FastInv {
         this.availableItems = Settings.availableItems;
 
         // Don't store reference - will be refreshed in updateItems()
+        this.customItems = new ArrayList<>();
+
+        List<String> slotsStr = config.getStringList("item-select-menu.item-slots");
+        this.itemSlots = slotsStr.stream()
+                .map(Integer::parseInt)
+                .collect(Collectors.toList());
+
+        this.itemsPerPage = config.getInt("item-select-menu.pagination.items-per-page", 21);
+
+        loadMenuItems();
+        updateItems();
+    }
+
+    public ItemSelectMenu(NewAdminOrderMenu parentMenu) {
+        super(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getInt("item-select-menu.size"),
+                ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("item-select-menu.title")));
+
+        this.parentMenu = parentMenu;
+        main = NOrder.getInstance();
+        Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
+
+        this.availableItems = Settings.availableItems;
         this.customItems = new ArrayList<>();
 
         List<String> slotsStr = config.getStringList("item-select-menu.item-slots");
@@ -111,19 +133,38 @@ public class ItemSelectMenu extends FastInv {
             if (itemObj instanceof Material material) {
                 setItem(slot, createItemButton(material), e -> {
                     if (material.name().contains("ENCHANTED") || canBeEnchanted(material)) {
-                        parentMenu.setSelectedItem(material);
-                        new EnchantSelectMenu(parentMenu, material).open((Player) e.getWhoClicked());
+                        if (parentMenu instanceof NewOrderMenu newOrderMenu) {
+                            newOrderMenu.setSelectedItem(material);
+                            new EnchantSelectMenu(newOrderMenu, material).open((Player) e.getWhoClicked());
+                        } else if (parentMenu instanceof NewAdminOrderMenu newAdminOrderMenu) {
+                            newAdminOrderMenu.setSelectedItem(material);
+                            // TODO: Add enchant select for admin orders if needed
+                            newAdminOrderMenu.updateMenuItems();
+                            newAdminOrderMenu.open((Player) e.getWhoClicked());
+                        }
                     } else {
-                        parentMenu.setSelectedItem(material);
-                        parentMenu.updateMenuItems();
-                        parentMenu.open((Player) e.getWhoClicked());
+                        if (parentMenu instanceof NewOrderMenu newOrderMenu) {
+                            newOrderMenu.setSelectedItem(material);
+                            newOrderMenu.updateMenuItems();
+                            newOrderMenu.open((Player) e.getWhoClicked());
+                        } else if (parentMenu instanceof NewAdminOrderMenu newAdminOrderMenu) {
+                            newAdminOrderMenu.setSelectedItem(material);
+                            newAdminOrderMenu.updateMenuItems();
+                            newAdminOrderMenu.open((Player) e.getWhoClicked());
+                        }
                     }
                 });
             } else if (itemObj instanceof ItemStack customItem) {
                 setItem(slot, createCustomItemButton(customItem), e -> {
-                    parentMenu.setSelectedItem(customItem);
-                    parentMenu.updateMenuItems();
-                    parentMenu.open((Player) e.getWhoClicked());
+                    if (parentMenu instanceof NewOrderMenu newOrderMenu) {
+                        newOrderMenu.setSelectedItem(customItem);
+                        newOrderMenu.updateMenuItems();
+                        newOrderMenu.open((Player) e.getWhoClicked());
+                    } else if (parentMenu instanceof NewAdminOrderMenu newAdminOrderMenu) {
+                        newAdminOrderMenu.setSelectedItem(customItem);
+                        newAdminOrderMenu.updateMenuItems();
+                        newAdminOrderMenu.open((Player) e.getWhoClicked());
+                    }
                 });
             }
         }
@@ -225,7 +266,11 @@ public class ItemSelectMenu extends FastInv {
                     });
                 });
             }
-            case "back" -> parentMenu.open(player);
+            case "back" -> {
+                if (parentMenu instanceof FastInv menu) {
+                    menu.open(player);
+                }
+            }
             case "next-page" -> {
                 if ((currentPage * itemsPerPage) < getFilteredItems().size()) {
                     currentPage++;

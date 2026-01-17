@@ -47,6 +47,16 @@ public class OrderAdminCommand implements BasicCommand {
         String subCommand = args[0].toLowerCase();
 
         switch (subCommand) {
+            case "create" -> {
+                if (!(entity instanceof Player player)) {
+                    sender.sendMessage(ColorUtil.hexColor("&cThis command can only be used by players."));
+                    return;
+                }
+                NOrder.getInstance().getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> {
+                    new com.notpatch.nOrder.gui.NewAdminOrderMenu().open(player);
+                });
+                NSound.click(player);
+            }
             case "reload" -> {
                 if (args.length == 1) {
                     reloadConfigurations(sender);
@@ -89,6 +99,8 @@ public class OrderAdminCommand implements BasicCommand {
     }
 
     private void sendUsage(CommandSender sender) {
+        sender.sendMessage(ColorUtil.hexColor("&e&l/orderadmin Commands:"));
+        sender.sendMessage(ColorUtil.hexColor("&7/orderadmin &fcreate &7- Open admin order creation menu"));
         sender.sendMessage(LanguageLoader.getMessage("admin-usage-reload"));
         sender.sendMessage(LanguageLoader.getMessage("admin-usage-info"));
         sender.sendMessage(LanguageLoader.getMessage("admin-usage-delete"));
@@ -103,7 +115,6 @@ public class OrderAdminCommand implements BasicCommand {
             sender.sendMessage(ColorUtil.hexColor("&7/orderadmin category &fedit <id> &7- Edit category name (interactive)"));
             sender.sendMessage(ColorUtil.hexColor("&7/orderadmin category &fdelete <name> &7- Delete a category"));
             sender.sendMessage(ColorUtil.hexColor("&7/orderadmin category &flist &7- List all categories"));
-            sender.sendMessage(ColorUtil.hexColor("&7/orderadmin category &fassign <order_id> <category_name> &7- Assign order to category"));
             return;
         }
 
@@ -273,52 +284,13 @@ public class OrderAdminCommand implements BasicCommand {
 
                 sender.sendMessage(ColorUtil.hexColor("&6═══════ Categories ═══════"));
                 for (OrderCategory category : categories) {
-                    int orderCount = NOrder.getInstance().getOrderCategoryManager()
-                            .getOrdersInCategory(category.getCategoryId()).size();
+                    int orderCount = NOrder.getInstance().getOrderCategoryManager().getAdminOrdersInCategory(category.getCategoryId()).size();
                     sender.sendMessage(ColorUtil.hexColor("&e" + category.getCategoryName() +
                             " &7(" + orderCount + " orders) &8[" + category.getCategoryId() + "]"));
                 }
             }
-            case "assign" -> {
-                if (args.length >= 3) {
-                    String orderId = args[1];
-                    String categoryID = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
-
-                    Order order = NOrder.getInstance().getOrderManager().getOrderById(orderId);
-                    if (order == null) {
-                        sender.sendMessage(ColorUtil.hexColor("&cOrder not found: " + orderId));
-                        if (entity instanceof Player player) {
-                            NSound.error(player);
-                        }
-                        return;
-                    }
-
-                    OrderCategory category = NOrder.getInstance().getOrderCategoryManager()
-                            .getCategoryById(categoryID);
-
-                    if (category == null) {
-                        sender.sendMessage(ColorUtil.hexColor("&cCategory not found: " + categoryID));
-                        if (entity instanceof Player player) {
-                            NSound.error(player);
-                        }
-                        return;
-                    }
-
-                    NOrder.getInstance().getOrderCategoryManager()
-                            .assignOrderToCategory(orderId, category.getCategoryId());
-
-                    sender.sendMessage(ColorUtil.hexColor("&aOrder " + orderId +
-                            " assigned to category: " + categoryID));
-
-                    if (entity instanceof Player player) {
-                        NSound.success(player);
-                    }
-                } else {
-                    sender.sendMessage(ColorUtil.hexColor("&cUsage: /orderadmin category assign <order_id> <category_name>"));
-                }
-            }
             default -> {
-                sender.sendMessage(ColorUtil.hexColor("&cUsage: /orderadmin category <create|delete|list|assign>"));
+                sender.sendMessage(ColorUtil.hexColor("&cUsage: /orderadmin category <create|delete|list>"));
             }
         }
     }
@@ -438,7 +410,7 @@ public class OrderAdminCommand implements BasicCommand {
     @Override
     public Collection<String> suggest(CommandSourceStack commandSourceStack, String[] args) {
 
-        List<String> suggestions = List.of("reload", "info", "delete", "player", "category");
+        List<String> suggestions = List.of("create", "reload", "info", "delete", "player", "category");
 
         if (args.length == 0) {
             return suggestions;
@@ -460,7 +432,7 @@ public class OrderAdminCommand implements BasicCommand {
                         .map(Player::getName)
                         .filter(name -> name.toLowerCase().startsWith(input))
                         .collect(Collectors.toList());
-                case "category" -> List.of("create", "edit", "delete", "list", "assign");
+                case "category" -> List.of("create", "edit", "delete", "list");
                 default -> Collections.emptyList();
             };
         } else if (args.length == 3) {
@@ -478,11 +450,6 @@ public class OrderAdminCommand implements BasicCommand {
                             .map(OrderCategory::getCategoryId)
                             .filter(id -> id.toLowerCase().startsWith(input))
                             .collect(Collectors.toList());
-                    case "assign" ->
-                        NOrder.getInstance().getOrderManager().getAllOrders().stream()
-                            .map(Order::getId)
-                            .filter(id -> id.toLowerCase().startsWith(input))
-                            .collect(Collectors.toList());
                     default -> Collections.emptyList();
                 };
             }
@@ -492,13 +459,6 @@ public class OrderAdminCommand implements BasicCommand {
             if (subCommand.equals("category")) {
                 String categorySubCommand = args[1].toLowerCase();
                 String input = args[3].toLowerCase();
-
-                if (categorySubCommand.equals("assign")) {
-                    return NOrder.getInstance().getOrderCategoryManager().getAllCategories().stream()
-                            .map(OrderCategory::getCategoryId)
-                            .filter(id -> id.toLowerCase().startsWith(input))
-                            .collect(Collectors.toList());
-                }
             }
         }
         return Collections.emptyList();

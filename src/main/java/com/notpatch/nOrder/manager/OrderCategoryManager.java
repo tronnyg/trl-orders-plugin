@@ -2,7 +2,6 @@ package com.notpatch.nOrder.manager;
 
 import com.notpatch.nOrder.NOrder;
 import com.notpatch.nOrder.database.DatabaseManager;
-import com.notpatch.nOrder.model.Order;
 import com.notpatch.nOrder.model.OrderCategory;
 import com.notpatch.nlib.util.NLogger;
 import lombok.Getter;
@@ -68,7 +67,8 @@ public class OrderCategoryManager {
     private void loadCategoryOrders() {
         categoryOrders.clear();
 
-        String query = "SELECT order_id, category_id FROM orders WHERE category_id IS NOT NULL";
+        // Only load admin orders from admin_orders table
+        String query = "SELECT order_id, category_id FROM admin_orders WHERE category_id IS NOT NULL";
 
         try (Connection conn = databaseManager.getDataSource().getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
@@ -82,7 +82,7 @@ public class OrderCategoryManager {
             }
 
         } catch (SQLException e) {
-            NLogger.error("Error loading category orders: " + e.getMessage());
+            NLogger.error("Error loading admin category orders: " + e.getMessage());
         }
     }
 
@@ -203,11 +203,10 @@ public class OrderCategoryManager {
             stmt.setString(1, categoryId);
             stmt.executeUpdate();
 
-            // Also remove category_id from orders
-            String updateQuery = "UPDATE orders SET category_id = NULL WHERE category_id = ?";
-            try (PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
-                updateStmt.setString(1, categoryId);
-                updateStmt.executeUpdate();
+            String updateAdminQuery = "UPDATE admin_orders SET category_id = NULL WHERE category_id = ?";
+            try (PreparedStatement updateAdminStmt = conn.prepareStatement(updateAdminQuery)) {
+                updateAdminStmt.setString(1, categoryId);
+                updateAdminStmt.executeUpdate();
             }
 
             return true;
@@ -229,18 +228,12 @@ public class OrderCategoryManager {
                 .orElse(null);
     }
 
-    public List<Order> getOrdersInCategory(String categoryId) {
-        List<String> orderIds = categoryOrders.getOrDefault(categoryId, new ArrayList<>());
-        List<Order> orders = new ArrayList<>();
-
-        for (String orderId : orderIds) {
-            Order order = main.getOrderManager().getOrderById(orderId);
-            if (order != null) {
-                orders.add(order);
-            }
+    public List<com.notpatch.nOrder.model.AdminOrder> getAdminOrdersInCategory(String categoryId) {
+        if (main.getAdminOrderManager() == null) {
+            return new ArrayList<>();
         }
 
-        return orders;
+        return main.getAdminOrderManager().getAdminOrdersByCategory(categoryId);
     }
 
     public void assignOrderToCategory(String orderId, String categoryId) {
@@ -252,8 +245,8 @@ public class OrderCategoryManager {
             categoryOrders.computeIfAbsent(categoryId, k -> new ArrayList<>()).add(orderId);
         }
 
-        // Update database
-        String query = "UPDATE orders SET category_id = ? WHERE order_id = ?";
+        // Update admin_orders table only
+        String query = "UPDATE admin_orders SET category_id = ? WHERE order_id = ?";
 
         try (Connection conn = databaseManager.getDataSource().getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -263,7 +256,7 @@ public class OrderCategoryManager {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            NLogger.error("Error assigning order to category: " + e.getMessage());
+            NLogger.error("Error assigning admin order to category: " + e.getMessage());
         }
     }
 

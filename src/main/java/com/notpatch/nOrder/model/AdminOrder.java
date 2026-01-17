@@ -106,7 +106,7 @@ public class AdminOrder extends BaseOrder {
 
     /**
      * Check if the order should be resumed (cooldown ended and is repeatable)
-     * @return true if should resume
+     * @return true if it should resume
      */
     public boolean shouldResume() {
         return repeatable && !isInCooldown() && status == OrderStatus.COOLDOWN;
@@ -122,7 +122,6 @@ public class AdminOrder extends BaseOrder {
             this.status = OrderStatus.COMPLETED;
         }
     }
-
     /**
      * Get remaining cooldown time formatted as hours and minutes
      * @return formatted cooldown time

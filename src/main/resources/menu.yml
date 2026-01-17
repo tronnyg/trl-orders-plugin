@@ -58,19 +58,14 @@ main-order-menu:
     name: "&f%ordered_by%'s Order &7(%order_id%)"
     lore:
       - ""
-      - "&7Item: &f%item%"
-      - "&7Amount: &f%amount%"
+      - "&5%item%'s"
+      - "&f%price% &feach"
       - ""
-      - "&7Delivered: &f%delivered%"
-      - "&7Remaining: &f%remaining%"
+      - "&4%delivered%/&2%amount% &7delivered"
+      - "&4%paid_price%/&2%total_price% &7paid"
       - ""
-      - "&7Each: &f%price%"
-      - "&7Total: &f%total_price%"
-      - "&7Paid: &f%paid_price%"
-      - ""
-      - '&7%time_remaining%'
-      - ""
-      - "&7[%progress_bar%&7]"
+      - "&fClick to deliver &2%ordered_by% &5%item%'s"
+      - "&7%time_remaining%"
       - ""
     action: view-order
 
@@ -123,19 +118,30 @@ category-order-menu:
     name: "&f%ordered_by%'s Order &7(%order_id%)"
     lore:
       - ""
-      - "&7Item: &f%item%"
-      - "&7Amount: &f%amount%"
+      - "&5%item%'s"
+      - "&f%price% &feach"
       - ""
-      - "&7Delivered: &f%delivered%"
-      - "&7Remaining: &f%remaining%"
+      - "&4%delivered%/&2%amount% &7delivered"
+      - "&4%paid_price%/&2%total_price% &7paid"
       - ""
-      - "&7Each: &f%price%"
-      - "&7Total: &f%total_price%"
-      - "&7Paid: &f%paid_price%"
+      - "&fClick to deliver &2%ordered_by% &5%item%'s"
+      - "&7%time_remaining%"
       - ""
-      - '&7%time_remaining%'
+    action: view-order
+
+  order-item-template-cooldown:
+    material: "%material%"
+    name: "&e%ordered_by%'s Order &8[COOLDOWN] &7(%order_id%)"
+    lore:
       - ""
-      - "&7[%progress_bar%&7]"
+      - "&5%item%'s"
+      - "&f%price% &feach"
+      - ""
+      - "&4%delivered%/&2%amount% &7delivered"
+      - "&4%paid_price%/&2%total_price% &7paid"
+      - ""
+      - "&cThis order is on cooldown"
+      - "&7Resets: %cooldown_time%"
       - ""
     action: view-order
 
@@ -244,21 +250,17 @@ your-orders-menu:
 
   order-item-template:
     material: "%material%"
-    name: "&7(%order_id%)"
+    name: "&f%ordered_by%'s Order &7(%order_id%)"
     lore:
       - ""
-      - "&7Item: &f%item%"
-      - "&7Amount: &f%amount%"
+      - "&5%item%'s"
+      - "&f%price% &feach"
       - ""
-      - "&7Delivered: &f%delivered%"
-      - "&7Remaining: &f%remaining%"
+      - "&4%delivered%/&2%amount% &7delivered"
+      - "&4%paid_price%/&2%total_price% &7paid"
       - ""
-      - "&7Each: &f%price%"
-      - "&7Total: &f%total_price%"
-      - ""
-      - "&7[%progress_bar%&7]"
-      - ""
-      - '&7%time_remaining%'
+      - "&fClick to deliver &2%ordered_by% &5%item%'s"
+      - "&7%time_remaining%"
       - ""
       - "&c&lShift+Right Click to Remove Order"
       - ""

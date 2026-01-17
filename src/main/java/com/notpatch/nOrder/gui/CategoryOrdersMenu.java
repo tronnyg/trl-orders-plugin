@@ -1,13 +1,14 @@
 package com.notpatch.nOrder.gui;
 
 import com.notpatch.nOrder.NOrder;
-import com.notpatch.nOrder.model.Order;
+import com.notpatch.nOrder.model.AdminOrder;
 import com.notpatch.nOrder.model.OrderCategory;
 import com.notpatch.nOrder.util.ItemStackHelper;
 import com.notpatch.nOrder.util.StringUtil;
 import com.notpatch.nlib.effect.NSound;
 import com.notpatch.nlib.fastinv.FastInv;
 import com.notpatch.nlib.util.ColorUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.bukkit.Material;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
@@ -19,6 +20,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.*;
 
+@Slf4j
 public class CategoryOrdersMenu extends FastInv {
 
     private final NOrder main;
@@ -26,7 +28,7 @@ public class CategoryOrdersMenu extends FastInv {
     private final Configuration config;
     private final Player player;
 
-    private List<Order> orders;
+    private List<AdminOrder> orders;
     private int page = 0;
 
     private List<Integer> orderSlots = new ArrayList<>();
@@ -40,7 +42,7 @@ public class CategoryOrdersMenu extends FastInv {
         this.player = player;
         this.config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
 
-        this.orders = main.getOrderCategoryManager().getOrdersInCategory(category.getCategoryId());
+        this.orders = main.getOrderCategoryManager().getAdminOrdersInCategory(category.getCategoryId());
 
         // Load order slots from config
         List<?> slotsList = config.getList("category-order-menu.order-slots");
@@ -99,18 +101,18 @@ public class CategoryOrdersMenu extends FastInv {
         }
 
         // Sort orders
-        List<Order> sortedOrders = new ArrayList<>(orders);
+        List<AdminOrder> sortedOrders = new ArrayList<AdminOrder>(orders);
         // Read sort type from the menu configuration (fallback to NEWEST)
         String sortType = config.getString("category-order-menu.sort-type", "NEWEST");
 
         if (sortType.equalsIgnoreCase("NEWEST")) {
-            sortedOrders.sort(Comparator.comparing(Order::getCreatedAt).reversed());
+            sortedOrders.sort(Comparator.comparing(AdminOrder::getCreatedAt).reversed());
         } else if (sortType.equalsIgnoreCase("OLDEST")) {
-            sortedOrders.sort(Comparator.comparing(Order::getCreatedAt));
+            sortedOrders.sort(Comparator.comparing(AdminOrder::getCreatedAt));
         } else if (sortType.equalsIgnoreCase("PRICE_HIGH")) {
-            sortedOrders.sort(Comparator.comparingDouble(Order::getPrice).reversed());
+            sortedOrders.sort(Comparator.comparingDouble(AdminOrder::getPrice).reversed());
         } else if (sortType.equalsIgnoreCase("PRICE_LOW")) {
-            sortedOrders.sort(Comparator.comparingDouble(Order::getPrice));
+            sortedOrders.sort(Comparator.comparingDouble(AdminOrder::getPrice));
         }
 
         // Pagination
@@ -119,7 +121,7 @@ public class CategoryOrdersMenu extends FastInv {
         int end = Math.min(start + itemsPerPage, sortedOrders.size());
 
         for (int i = start; i < end; i++) {
-            Order order = sortedOrders.get(i);
+            AdminOrder order = sortedOrders.get(i);
             int slotIndex = i - start;
 
             if (slotIndex >= orderSlots.size()) break;
@@ -130,15 +132,20 @@ public class CategoryOrdersMenu extends FastInv {
             ItemStack orderItem = createOrderItem(order);
 
             setItem(slot, orderItem, e -> {
-                // Open order details menu when clicked
-                new OrderDetailsMenu(order).open(player);
+                // Open admin order details menu when clicked
+                new AdminOrderDetailsMenu(order).open(player);
                 NSound.click(player);
             });
         }
     }
 
-    private ItemStack createOrderItem(Order order) {
-        ConfigurationSection templateSection = config.getConfigurationSection("category-order-menu.order-item-template");
+    private ItemStack createOrderItem(AdminOrder order) {
+        // Choose template based on order status
+        String templatePath = order.isInCooldown()
+            ? "category-order-menu.order-item-template-cooldown"
+            : "category-order-menu.order-item-template";
+
+        ConfigurationSection templateSection = config.getConfigurationSection(templatePath);
 
         if (templateSection == null) {
             return new ItemStack(Material.BARRIER);

@@ -3,32 +3,26 @@ package com.notpatch.nOrder.gui;
 import com.notpatch.nOrder.LanguageLoader;
 import com.notpatch.nOrder.NOrder;
 import com.notpatch.nOrder.model.AdminOrder;
-import com.notpatch.nOrder.model.BaseOrder;
-import com.notpatch.nOrder.model.Order;
 import com.notpatch.nOrder.model.OrderStatus;
 import com.notpatch.nOrder.util.ItemStackHelper;
 import com.notpatch.nlib.effect.NSound;
 import com.notpatch.nlib.fastinv.FastInv;
 import com.notpatch.nlib.util.ColorUtil;
 import lombok.Getter;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.BlockStateMeta;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class OrderDetailsMenu extends FastInv {
+public class AdminOrderDetailsMenu extends FastInv {
 
     private final NOrder main;
-
-    private final Order order;
+    private final AdminOrder order;
 
     @Getter
     private int itemsDelivered = 0;
@@ -38,7 +32,7 @@ public class OrderDetailsMenu extends FastInv {
 
     private boolean processed = false;
 
-    public OrderDetailsMenu(Order order) {
+    public AdminOrderDetailsMenu(AdminOrder order) {
         super(54, ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("order-details-menu.title")));
         main = NOrder.getInstance();
         this.order = order;
@@ -86,53 +80,12 @@ public class OrderDetailsMenu extends FastInv {
             ItemStack item = getInventory().getItem(i);
             if (item == null || item.getType().isAir()) continue;
 
-            if (item.getType() == Material.SHULKER_BOX) {
-                if (!(item.getItemMeta() instanceof BlockStateMeta)) {
-                    invalidItems.add(item.clone());
-                    getInventory().clear(i);
-                    continue;
-                }
-
-                BlockStateMeta blockStateMeta = (BlockStateMeta) item.getItemMeta();
-                if (!(blockStateMeta.getBlockState() instanceof ShulkerBox)) {
-                    invalidItems.add(item.clone());
-                    getInventory().clear(i);
-                    continue;
-                }
-
-                ShulkerBox shulkerBox = (ShulkerBox) blockStateMeta.getBlockState();
-                List<ItemStack> nonMatching = new ArrayList<>();
-
-                for (ItemStack shulkerItem : shulkerBox.getInventory().getContents()) {
-                    if (shulkerItem == null || shulkerItem.getType().isAir()) continue;
-                    if (isSameItem(shulkerItem, order.getItem())) {
-                        validItems.add(shulkerItem.clone());
-                    } else {
-                        nonMatching.add(shulkerItem.clone());
-                    }
-                }
-
-                ItemStack returnedShulker = item.clone();
-                BlockStateMeta retMeta = (BlockStateMeta) returnedShulker.getItemMeta();
-                ShulkerBox returnedBox = (ShulkerBox) retMeta.getBlockState();
-                returnedBox.getInventory().clear();
-                for (int idx = 0; idx < nonMatching.size(); idx++) {
-                    returnedBox.getInventory().setItem(idx, nonMatching.get(idx));
-                }
-                retMeta.setBlockState(returnedBox);
-                returnedShulker.setItemMeta(retMeta);
-
-                invalidItems.add(returnedShulker);
-
-                getInventory().clear(i);
+            if (isSameItem(item, order.getItem())) {
+                validItems.add(item.clone());
             } else {
-                if (isSameItem(item, order.getItem())) {
-                    validItems.add(item.clone());
-                } else {
-                    invalidItems.add(item.clone());
-                }
-                getInventory().clear(i);
+                invalidItems.add(item.clone());
             }
+            getInventory().clear(i);
         }
 
         for (ItemStack item : invalidItems) {
@@ -190,26 +143,15 @@ public class OrderDetailsMenu extends FastInv {
                     main.getPlayerStatsManager().getStatistics(player.getUniqueId()).addDeliveredItems(totalAmount);
                     main.getPlayerStatsManager().getStatistics(player.getUniqueId()).addTotalEarnings(earning);
 
-                    // Only update collector stats for player orders
-                    if (order instanceof Order playerOrder) {
-                        main.getPlayerStatsManager().getStatistics(playerOrder.getPlayerId()).addCollectedItems(totalAmount);
-                    }
-
                     main.getOrderLogger().logOrderDelivery(order, player.getName(), totalAmount, earning);
 
                     NSound.success(player);
 
                     if (order.getRemaining() <= 0) {
-                        order.setStatus(OrderStatus.COMPLETED);
-                        main.getOrderLogger().logOrderCompleted(order);
+                        order.complete();
+                        main.getAdminOrderManager().saveAdminOrders();
 
-                        // Only notify owner for player orders
-                        if (order instanceof Order playerOrder) {
-                            Player orderOwner = Bukkit.getPlayer(playerOrder.getPlayerId());
-                            if (orderOwner != null && orderOwner.isOnline()) {
-                                orderOwner.sendMessage(LanguageLoader.getMessage("delivery-completed").replace("%material%", order.getMaterial().name()));
-                            }
-                        }
+                        main.getOrderLogger().logOrderCompleted(order);
                     }
                 }
             }
@@ -224,7 +166,6 @@ public class OrderDetailsMenu extends FastInv {
         if (event.getCursor().getType() != Material.AIR) {
             NSound.click((Player) event.getWhoClicked());
         }
-
     }
 
     @Override
@@ -235,6 +176,5 @@ public class OrderDetailsMenu extends FastInv {
     private boolean isSameItem(ItemStack item1, ItemStack item2) {
         return ItemStackHelper.isSameItem(item1, item2);
     }
-
-
 }
+

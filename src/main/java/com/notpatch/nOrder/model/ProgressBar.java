@@ -9,7 +9,7 @@ public class ProgressBar {
     private int current;
     private int max;
 
-    public ProgressBar(Order order) {
+    public ProgressBar(BaseOrder order) {
         this.current = order.getDelivered();
         this.max = order.getAmount();
     }

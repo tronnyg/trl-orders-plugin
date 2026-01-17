@@ -71,11 +71,11 @@ public class OrderLogger {
         log(message);
     }
 
-    public void logOrderDelivery(Order order, String delivererName, int deliveredAmount, double earnedMoney) {
+    public void logOrderDelivery(com.notpatch.nOrder.model.BaseOrder order, String delivererName, int deliveredAmount, double earnedMoney) {
         String message = String.format(
                 "[ORDER_DELIVERY] Deliverer: %s | Order Owner: %s | Order ID: %s | Item: %s | Delivered: %d | Earned: %.2f | Progress: %d/%d",
                 delivererName,
-                order.getPlayerName(),
+                order.getDisplayName(),
                 order.getId(),
                 StringUtil.formatMaterialName(order.getMaterial()),
                 deliveredAmount,
@@ -111,10 +111,10 @@ public class OrderLogger {
         log(message);
     }
 
-    public void logOrderCompleted(Order order) {
+    public void logOrderCompleted(com.notpatch.nOrder.model.BaseOrder order) {
         String message = String.format(
                 "[ORDER_COMPLETED] Player: %s | Order ID: %s | Item: %s | Total Delivered: %d | Total Collected: %d",
-                order.getPlayerName(),
+                order.getDisplayName(),
                 order.getId(),
                 StringUtil.formatMaterialName(order.getMaterial()),
                 order.getDelivered(),
@@ -144,6 +144,16 @@ public class OrderLogger {
                 order.getId(),
                 order.getPlayerName(),
                 StringUtil.formatMaterialName(order.getMaterial())
+        );
+        log(message);
+    }
+
+    public void logAdminAction(String adminName, String action, String details) {
+        String message = String.format(
+                "[ADMIN_ACTION] Admin: %s | Action: %s | Details: %s",
+                adminName,
+                action,
+                details
         );
         log(message);
     }
