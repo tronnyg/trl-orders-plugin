@@ -225,6 +225,7 @@ public class ItemStackHelper {
         private List<String> lore = new ArrayList<>();
         private boolean glow = false;
         private List<ItemFlag> itemFlags = new ArrayList<>();
+        private int customModelData = 0;
 
         public Builder material(Material material) {
             this.material = material;
@@ -233,6 +234,11 @@ public class ItemStackHelper {
 
         public Builder amount(int amount) {
             this.amount = Math.max(1, Math.min(64, amount));
+            return this;
+        }
+
+        public Builder customModelData(int data) {
+            this.customModelData = data;
             return this;
         }
 
@@ -298,6 +304,10 @@ public class ItemStackHelper {
                 if (glow) {
                     meta.addEnchant(Enchantment.LUCK_OF_THE_SEA, 1, true);
                     meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+                }
+
+                if (customModelData > 0) {
+                    meta.setCustomModelData(customModelData);
                 }
 
                 for (ItemFlag flag : itemFlags) {
