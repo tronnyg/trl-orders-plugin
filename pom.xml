@@ -6,7 +6,7 @@
 
     <groupId>com.notpatch</groupId>
     <artifactId>NOrder</artifactId>
-    <version>1.3.4-SNAPSHOT</version>
+    <version>1.3.5</version>
     <packaging>jar</packaging>
 
     <name>NOrder</name>
