@@ -146,6 +146,7 @@ public class NewOrderMenu extends FastInv implements Listener {
                 } else {
                     setItem(slot,
                             ItemStackHelper.builder()
+                                    .customModelData(selectItemSection.getInt("custom-model-data"))
                                     .material(Material.valueOf(selectItemSection.getString("material")))
                                     .displayName(ColorUtil.hexColor(selectItemSection.getString("name")))
                                     .lore(ColorUtil.getColoredList(selectItemSection.getStringList("lore")))
@@ -169,6 +170,7 @@ public class NewOrderMenu extends FastInv implements Listener {
             ItemStack quantityItem = ItemStackHelper.builder().material(material)
                     .displayName(name)
                     .lore(lore)
+                    .customModelData(quantitySection.getInt("custom-model-data"))
                     .amount(Math.min(64, quantity))
                     .build();
 
@@ -191,6 +193,7 @@ public class NewOrderMenu extends FastInv implements Listener {
                     ItemStackHelper.builder().material(material)
                             .displayName(name)
                             .lore(lore)
+                            .customModelData(priceSection.getInt("custom-model-data"))
                             .build(),
                     e -> handleMenuAction("set-price", e));
         }
@@ -221,6 +224,7 @@ public class NewOrderMenu extends FastInv implements Listener {
                     ItemStackHelper.builder().material(material)
                             .displayName(name)
                             .lore(lore)
+                            .customModelData(confirmSection.getInt("custom-model-data"))
                             .build(),
                     e -> handleMenuAction("confirm-order", e));
         }
@@ -236,7 +240,7 @@ public class NewOrderMenu extends FastInv implements Listener {
                     .map(ColorUtil::hexColor)
                     .collect(Collectors.toList());
             setItem(highlightSection.getInt("slot"),
-                    ItemStackHelper.builder().material(material).glow(isHighlighted).lore(lore).displayName(name).build()
+                    ItemStackHelper.builder().material(material).customModelData(highlightSection.getInt("custom-model-data")).glow(isHighlighted).lore(lore).displayName(name).build()
                     , e -> handleMenuAction("toggle-highlight", e));
         }
     }
