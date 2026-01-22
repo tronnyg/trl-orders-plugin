@@ -3,6 +3,7 @@ package com.notpatch.nOrder.manager;
 import com.notpatch.nOrder.Settings;
 import com.notpatch.nOrder.hook.customitem.CustomItemProvider;
 import com.notpatch.nOrder.hook.customitem.ItemsAdderProvider;
+import com.notpatch.nOrder.hook.customitem.MMOItemsProvider;
 import com.notpatch.nOrder.hook.customitem.NexoProvider;
 import com.notpatch.nlib.util.NLogger;
 import org.bukkit.inventory.ItemStack;
@@ -16,7 +17,7 @@ public class CustomItemManager {
 
     public CustomItemManager() {
         registerProviderSafely("ItemsAdder", ItemsAdderProvider::new);
-        //registerProviderSafely("MMOItems", MMOItemsProvider::new);
+        registerProviderSafely("MMOItems", MMOItemsProvider::new);
         registerProviderSafely("Nexo", NexoProvider::new);
     }
 
