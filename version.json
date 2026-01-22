@@ -1,5 +1,5 @@
 {
-  "version": "1.3.4",
-  "message": "\n- General improvement\n- Fixed some bugs on menu",
-  "critical": true
+  "version": "1.3.5",
+  "message": "\n- Added enchanted book support\n- Added MMOItems support",
+  "critical": false
 }
