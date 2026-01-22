@@ -36,8 +36,6 @@ public class EnchantSelectMenu extends FastInv {
         this.selectedMaterial = material;
         this.config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
 
-        // For enchanted books, show all enchantments since they can store any enchantment
-        // For other items, only show enchantments that can be applied to that item
         if (material == Material.ENCHANTED_BOOK) {
             this.availableEnchants = Arrays.stream(Enchantment.values())
                     .collect(Collectors.toList());
