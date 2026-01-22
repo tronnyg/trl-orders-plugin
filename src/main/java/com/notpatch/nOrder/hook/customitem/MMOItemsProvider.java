@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class MMOItemsProvider implements CustomItemProvider {
 
@@ -151,48 +152,36 @@ public class MMOItemsProvider implements CustomItemProvider {
             String id2 = getCustomItemId(item2);
             if (id1 == null || !id1.equals(id2)) return false;
 
-            // Compare MMOItems stats to ensure items are truly identical
             return compareMMOItemStats(item1, item2);
         } catch (Exception e) {
             return false;
         }
     }
 
-    /**
-     * Compares the MMOItems stats between two items.
-     * This ensures that items with different random stats (like attack damage,
-     * gem stones, etc.) are not considered the same.
-     */
     private boolean compareMMOItemStats(ItemStack item1, ItemStack item2) {
         try {
             NBTItem nbt1 = NBTItem.get(item1);
             NBTItem nbt2 = NBTItem.get(item2);
 
-            // Get all stat-related NBT tags and compare them
-            // MMOItems stores stats with MMOITEMS_ prefix
-            java.util.Set<String> tags1 = nbt1.getTags();
-            java.util.Set<String> tags2 = nbt2.getTags();
+            Set<String> tags1 = nbt1.getTags();
+            Set<String> tags2 = nbt2.getTags();
 
-            // Compare relevant MMOItems stat tags
             for (String tag : tags1) {
                 if (isStatTag(tag)) {
                     Object value1 = nbt1.getDouble(tag);
                     Object value2 = nbt2.getDouble(tag);
 
-                    // If tag exists in item1 but not in item2 or values differ
                     if (!tags2.contains(tag)) return false;
                     if (!value1.equals(value2)) return false;
                 }
             }
 
-            // Check if item2 has extra stat tags that item1 doesn't have
             for (String tag : tags2) {
                 if (isStatTag(tag) && !tags1.contains(tag)) {
                     return false;
                 }
             }
 
-            // Compare gem stones
             String gems1 = nbt1.getString("MMOITEMS_GEM_STONES");
             String gems2 = nbt2.getString("MMOITEMS_GEM_STONES");
             if (gems1 != null && !gems1.equals(gems2)) return false;
@@ -207,15 +196,10 @@ public class MMOItemsProvider implements CustomItemProvider {
         }
     }
 
-    /**
-     * Checks if an NBT tag is a stat-related tag that should be compared.
-     */
     private boolean isStatTag(String tag) {
         if (tag == null) return false;
-        // MMOItems stat tags typically start with MMOITEMS_ and include various stats
         if (!tag.startsWith("MMOITEMS_")) return false;
 
-        // Exclude identification tags, only compare stat values
         if (tag.equals("MMOITEMS_ITEM_ID")) return false;
         if (tag.equals("MMOITEMS_ITEM_TYPE")) return false;
         if (tag.equals("MMOITEMS_ITEM_UUID")) return false;
