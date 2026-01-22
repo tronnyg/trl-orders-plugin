@@ -37,7 +37,7 @@ commands:
 
 settings:
   # Enable debug mode for detailed logging
-  debug: true
+  debug: false
   highlight-fee: 2.5
   send-webhooks: false
   min-price-per-item: 0.01
