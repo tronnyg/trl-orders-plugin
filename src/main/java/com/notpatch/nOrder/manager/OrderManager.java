@@ -264,7 +264,6 @@ public class OrderManager {
             main.getPlayerStatsManager().getStatistics(order.getPlayerId()).addTotalOrders(1);
             main.getOrderLogger().logOrderCreated(order, totalPrice);
             NSound.success(player);
-            broadcastOrder(order, totalPrice);
             return;
         }
 
@@ -294,7 +293,6 @@ public class OrderManager {
         main.getPlayerStatsManager().getStatistics(order.getPlayerId()).addTotalOrders(1);
         main.getOrderLogger().logOrderCreated(order, totalPrice);
         NSound.success(player);
-        broadcastOrder(order, totalPrice);
         DiscordWebhook webhook = main.getWebhookManager().getWebhooks().get("order-create");
         if (webhook != null) {
             DiscordWebhook clonedWebhook = webhook.clone();
@@ -430,29 +428,6 @@ public class OrderManager {
         return sb.toString();
     }
 
-    private void broadcastOrder(Order order, double totalPrice) {
-        if (!Settings.BROADCAST_ENABLED) return;
-        if (totalPrice < Settings.BROADCAST_MIN_TOTAL_PRICE) return;
-
-        String playerName = order.getPlayerName();
-
-        if (playerName == null || playerName.isEmpty()) {
-            OfflinePlayer offlinePlayer = main.getServer().getOfflinePlayer(order.getPlayerId());
-            playerName = offlinePlayer.getName();
-            if (playerName == null) {
-                playerName = "";
-            }
-        }
-
-        String message = LanguageLoader.getMessage("order-broadcast")
-                .replace("%player%", playerName)
-                .replace("%material%", StringUtil.formatMaterialName(order.getMaterial()))
-                .replace("%amount%", String.valueOf(order.getAmount()))
-                .replace("%price%", String.format("%.2f", order.getPrice()))
-                .replace("%total_price%", String.format("%.2f", totalPrice));
-
-        main.getServer().broadcast(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacyAmpersand().deserialize(message));
-    }
 
     public void cleanExpiredOrders() {
         List<Order> expiredOrders = new ArrayList<>();
