@@ -63,7 +63,7 @@ public class OrderDetailsMenu extends FastInv {
     }
 
     private void processDelivery(Player player) {
-        if (order.getStatus() != OrderStatus.ACTIVE) {
+        if (!order.tryLock()) {
             for (int i = 0; i < getInventory().getSize(); i++) {
                 ItemStack item = getInventory().getItem(i);
                 if (item != null && !item.getType().isAir()) {
@@ -72,84 +72,98 @@ public class OrderDetailsMenu extends FastInv {
                     getInventory().clear(i);
                 }
             }
-            player.sendMessage(LanguageLoader.getMessage("order-not-active"));
+            player.sendMessage(LanguageLoader.getMessage("order-processing"));
             NSound.error(player);
             return;
         }
 
-        List<ItemStack> validItems = new ArrayList<>();
-        List<ItemStack> invalidItems = new ArrayList<>();
-
-        for (int i = 0; i < getInventory().getSize(); i++) {
-            ItemStack item = getInventory().getItem(i);
-            if (item == null || item.getType().isAir()) continue;
-
-            if (item.getType() == Material.SHULKER_BOX) {
-                if (!(item.getItemMeta() instanceof BlockStateMeta)) {
-                    invalidItems.add(item.clone());
-                    getInventory().clear(i);
-                    continue;
-                }
-
-                BlockStateMeta blockStateMeta = (BlockStateMeta) item.getItemMeta();
-                if (!(blockStateMeta.getBlockState() instanceof ShulkerBox)) {
-                    invalidItems.add(item.clone());
-                    getInventory().clear(i);
-                    continue;
-                }
-
-                ShulkerBox shulkerBox = (ShulkerBox) blockStateMeta.getBlockState();
-                List<ItemStack> nonMatching = new ArrayList<>();
-
-                for (ItemStack shulkerItem : shulkerBox.getInventory().getContents()) {
-                    if (shulkerItem == null || shulkerItem.getType().isAir()) continue;
-                    if (isSameItem(shulkerItem, order.getItem())) {
-                        validItems.add(shulkerItem.clone());
-                    } else {
-                        nonMatching.add(shulkerItem.clone());
+        try {
+            if (order.getStatus() != OrderStatus.ACTIVE) {
+                for (int i = 0; i < getInventory().getSize(); i++) {
+                    ItemStack item = getInventory().getItem(i);
+                    if (item != null && !item.getType().isAir()) {
+                        player.getInventory().addItem(item).forEach((slot, leftover) ->
+                                player.getWorld().dropItemNaturally(player.getLocation(), leftover));
+                        getInventory().clear(i);
                     }
                 }
+                player.sendMessage(LanguageLoader.getMessage("order-not-active"));
+                NSound.error(player);
+                return;
+            }
 
-                ItemStack returnedShulker = item.clone();
-                BlockStateMeta retMeta = (BlockStateMeta) returnedShulker.getItemMeta();
-                ShulkerBox returnedBox = (ShulkerBox) retMeta.getBlockState();
-                returnedBox.getInventory().clear();
-                for (int idx = 0; idx < nonMatching.size(); idx++) {
-                    returnedBox.getInventory().setItem(idx, nonMatching.get(idx));
-                }
-                retMeta.setBlockState(returnedBox);
-                returnedShulker.setItemMeta(retMeta);
+            List<ItemStack> validItems = new ArrayList<>();
+            List<ItemStack> invalidItems = new ArrayList<>();
 
-                invalidItems.add(returnedShulker);
+            for (int i = 0; i < getInventory().getSize(); i++) {
+                ItemStack item = getInventory().getItem(i);
+                if (item == null || item.getType().isAir()) continue;
 
-                getInventory().clear(i);
-            } else {
-                if (isSameItem(item, order.getItem())) {
-                    validItems.add(item.clone());
+                if (item.getType() == Material.SHULKER_BOX) {
+                    if (!(item.getItemMeta() instanceof BlockStateMeta)) {
+                        invalidItems.add(item.clone());
+                        getInventory().clear(i);
+                        continue;
+                    }
+
+                    BlockStateMeta blockStateMeta = (BlockStateMeta) item.getItemMeta();
+                    if (!(blockStateMeta.getBlockState() instanceof ShulkerBox)) {
+                        invalidItems.add(item.clone());
+                        getInventory().clear(i);
+                        continue;
+                    }
+
+                    ShulkerBox shulkerBox = (ShulkerBox) blockStateMeta.getBlockState();
+                    List<ItemStack> nonMatching = new ArrayList<>();
+
+                    for (ItemStack shulkerItem : shulkerBox.getInventory().getContents()) {
+                        if (shulkerItem == null || shulkerItem.getType().isAir()) continue;
+                        if (isSameItem(shulkerItem, order.getItem())) {
+                            validItems.add(shulkerItem.clone());
+                        } else {
+                            nonMatching.add(shulkerItem.clone());
+                        }
+                    }
+
+                    ItemStack returnedShulker = item.clone();
+                    BlockStateMeta retMeta = (BlockStateMeta) returnedShulker.getItemMeta();
+                    ShulkerBox returnedBox = (ShulkerBox) retMeta.getBlockState();
+                    returnedBox.getInventory().clear();
+                    for (int idx = 0; idx < nonMatching.size(); idx++) {
+                        returnedBox.getInventory().setItem(idx, nonMatching.get(idx));
+                    }
+                    retMeta.setBlockState(returnedBox);
+                    returnedShulker.setItemMeta(retMeta);
+
+                    invalidItems.add(returnedShulker);
+
+                    getInventory().clear(i);
                 } else {
-                    invalidItems.add(item.clone());
+                    if (isSameItem(item, order.getItem())) {
+                        validItems.add(item.clone());
+                    } else {
+                        invalidItems.add(item.clone());
+                    }
+                    getInventory().clear(i);
                 }
-                getInventory().clear(i);
-            }
-        }
-
-        for (ItemStack item : invalidItems) {
-            player.getInventory().addItem(item).forEach((slot, leftover) ->
-                    player.getWorld().dropItemNaturally(player.getLocation(), leftover));
-        }
-
-        if (!invalidItems.isEmpty()) {
-            player.sendMessage(LanguageLoader.getMessage("delivery-wrong-item").replace("%material%", order.getMaterial().name()));
-        }
-
-        if (!validItems.isEmpty()) {
-            int totalAmount = 0;
-
-            for (ItemStack item : validItems) {
-                totalAmount += item.getAmount();
             }
 
-            synchronized (order) {
+            for (ItemStack item : invalidItems) {
+                player.getInventory().addItem(item).forEach((slot, leftover) ->
+                        player.getWorld().dropItemNaturally(player.getLocation(), leftover));
+            }
+
+            if (!invalidItems.isEmpty()) {
+                player.sendMessage(LanguageLoader.getMessage("delivery-wrong-item").replace("%material%", order.getMaterial().name()));
+            }
+
+            if (!validItems.isEmpty()) {
+                int totalAmount = 0;
+
+                for (ItemStack item : validItems) {
+                    totalAmount += item.getAmount();
+                }
+
                 if (order.getStatus() != OrderStatus.ACTIVE) {
                     for (ItemStack item : validItems) {
                         player.getInventory().addItem(item).forEach((slot, leftover) ->
@@ -203,9 +217,11 @@ public class OrderDetailsMenu extends FastInv {
                         }
                     }
                 }
+            } else if (invalidItems.isEmpty()) {
+                NSound.error(player);
             }
-        } else if (invalidItems.isEmpty()) {
-            NSound.error(player);
+        } finally {
+            order.unlock();
         }
     }
 
