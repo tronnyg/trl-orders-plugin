@@ -34,6 +34,7 @@ delivery-completed: "&a✓ Your order %material% has been fully delivered!"
 delivery-wrong-item: "&cYou can only deliver &f%material% &cfor this order!"
 delivery-excess-items: "&7Returned &c%amount% &7excess items."
 order-not-active: "&cThis order is no longer active!"
+order-processing: "&cThis order is currently being processed! Please try again in a moment."
 
 # Order Owner Notifications
 order-progress: "&aYour order for &f%material% &ahas received a delivery of &f%amount% &aitems by &f%player%"
@@ -49,8 +50,26 @@ order-countdown-format: "%d Days %d Hours %d Minutes %d Seconds"
 
 # Admin Messages
 order-not-found: "&cOrder with ID %id% not found."
-order-info: "&aOrder ID: %id%, Item: %item%, Price: %price%, Quantity: %amount%, Owner: %buyer%, Created At: %created_at%, Status: %status%, Delivered: %delivered%/%amount%"
 order-deleted: "&aOrder ID %id% has been deleted."
+player-no-orders: "&cPlayer %player% has no orders."
+
+# Admin Info Command (Lore Format)
+admin-info-lore:
+  - "&6═══════════ Order Info ═══════════"
+  - "&7ID: &f%id%"
+  - "&7Owner: &f%owner%"
+  - "&7Item: &f%item%"
+  - "&7Amount: &f%amount%"
+  - "&7Price per item: &f%price%"
+  - "&7Total Price: &f%total_price%"
+  - "&7Status: &f%status%"
+  - "&7Delivered: &f%delivered%/%amount%"
+  - "&7Collected: &f%collected%/%delivered%"
+  - "&7Highlight: &f%highlight%"
+  - "&7Created: &f%created%"
+  - "&7Expires: &f%expires%"
+  - "&6═══════════════════════════════════"
+
 
 admin-usage-reload: "&7/orderadmin reload &8- &fReload plugin configurations"
 admin-usage-info: "&7/orderadmin info <id> &8- &fView detailed information about an order"

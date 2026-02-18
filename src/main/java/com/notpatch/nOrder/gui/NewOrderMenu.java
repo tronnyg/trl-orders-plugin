@@ -7,12 +7,15 @@ import com.notpatch.nOrder.model.Order;
 import com.notpatch.nOrder.model.OrderStatus;
 import com.notpatch.nOrder.util.ItemStackHelper;
 import com.notpatch.nOrder.util.PlayerUtil;
+import com.notpatch.nOrder.util.StringUtil;
 import com.notpatch.nlib.effect.NSound;
 import com.notpatch.nlib.fastinv.FastInv;
 import com.notpatch.nlib.util.ColorUtil;
 import lombok.Getter;
 import lombok.Setter;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.HumanEntity;
@@ -147,6 +150,7 @@ public class NewOrderMenu extends FastInv implements Listener {
                 } else {
                     setItem(slot,
                             ItemStackHelper.builder()
+                                    .customModelData(selectItemSection.getInt("custom-model-data"))
                                     .material(Material.valueOf(selectItemSection.getString("material")))
                                     .displayName(ColorUtil.hexColor(selectItemSection.getString("name")))
                                     .lore(ColorUtil.getColoredList(selectItemSection.getStringList("lore")))
@@ -170,6 +174,7 @@ public class NewOrderMenu extends FastInv implements Listener {
             ItemStack quantityItem = ItemStackHelper.builder().material(material)
                     .displayName(name)
                     .lore(lore)
+                    .customModelData(quantitySection.getInt("custom-model-data"))
                     .amount(Math.min(64, quantity))
                     .build();
 
@@ -192,6 +197,7 @@ public class NewOrderMenu extends FastInv implements Listener {
                     ItemStackHelper.builder().material(material)
                             .displayName(name)
                             .lore(lore)
+                            .customModelData(priceSection.getInt("custom-model-data"))
                             .build(),
                     e -> handleMenuAction("set-price", e));
         }
@@ -222,6 +228,7 @@ public class NewOrderMenu extends FastInv implements Listener {
                     ItemStackHelper.builder().material(material)
                             .displayName(name)
                             .lore(lore)
+                            .customModelData(confirmSection.getInt("custom-model-data"))
                             .build(),
                     e -> handleMenuAction("confirm-order", e));
         }
@@ -237,7 +244,7 @@ public class NewOrderMenu extends FastInv implements Listener {
                     .map(ColorUtil::hexColor)
                     .collect(Collectors.toList());
             setItem(highlightSection.getInt("slot"),
-                    ItemStackHelper.builder().material(material).glow(isHighlighted).lore(lore).displayName(name).build()
+                    ItemStackHelper.builder().material(material).customModelData(highlightSection.getInt("custom-model-data")).glow(isHighlighted).lore(lore).displayName(name).build()
                     , e -> handleMenuAction("toggle-highlight", e));
         }
     }
@@ -335,6 +342,28 @@ public class NewOrderMenu extends FastInv implements Listener {
                 Order order = new Order(id, player.getUniqueId(), player.getName(), selectedItem, customItemId, quantity, pricePerItem, 0, 0, now, expireAt, isHighlighted, OrderStatus.ACTIVE);
 
                 NOrder.getInstance().getOrderManager().addOrder(order);
+
+                if (Settings.BROADCAST_ENABLED) {
+                    if (totalPrice >= Settings.BROADCAST_MIN_TOTAL_PRICE) {
+                        String playerName = player.getName();
+                        if (playerName.isEmpty()) {
+                            OfflinePlayer offlinePlayer = main.getServer().getOfflinePlayer(order.getPlayerId());
+                            playerName = offlinePlayer.getName();
+                            if (playerName == null) {
+                                playerName = "";
+                            }
+                        }
+
+                        String message = LanguageLoader.getMessage("order-broadcast")
+                                .replace("%player%", playerName)
+                                .replace("%material%", StringUtil.formatMaterialName(order.getMaterial()))
+                                .replace("%amount%", String.valueOf(order.getAmount()))
+                                .replace("%price%", String.format("%.2f", order.getPrice()))
+                                .replace("%total_price%", String.format("%.2f", totalPrice));
+
+                        main.getServer().broadcast(LegacyComponentSerializer.legacyAmpersand().deserialize(message));
+                    }
+                }
 
                 NOrder.getInstance().getNewOrderMenuManager().removeMenu(player);
 

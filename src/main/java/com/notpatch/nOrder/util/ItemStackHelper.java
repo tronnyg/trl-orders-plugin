@@ -1,18 +1,24 @@
 package com.notpatch.nOrder.util;
 
+import com.destroystokyo.paper.profile.PlayerProfile;
+import com.destroystokyo.paper.profile.ProfileProperty;
 import com.google.common.collect.ArrayListMultimap;
 import com.notpatch.nOrder.NOrder;
 import com.notpatch.nlib.util.ColorUtil;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class ItemStackHelper {
 
@@ -65,6 +71,29 @@ public class ItemStackHelper {
 
         if (item1.getItemMeta().hasEnchants() != item2.getItemMeta().hasEnchants()) {
             return false;
+        }
+
+        if (item1.getType() == Material.ENCHANTED_BOOK && item2.getType() == Material.ENCHANTED_BOOK) {
+            EnchantmentStorageMeta meta1 = (EnchantmentStorageMeta) item1.getItemMeta();
+            EnchantmentStorageMeta meta2 = (EnchantmentStorageMeta) item2.getItemMeta();
+
+            Map<Enchantment, Integer> storedEnchants1 = meta1.getStoredEnchants();
+            Map<Enchantment, Integer> storedEnchants2 = meta2.getStoredEnchants();
+
+            if (storedEnchants1.size() != storedEnchants2.size()) {
+                return false;
+            }
+
+            for (Map.Entry<Enchantment, Integer> entry : storedEnchants1.entrySet()) {
+                Enchantment enchant = entry.getKey();
+                Integer level1 = entry.getValue();
+                Integer level2 = storedEnchants2.get(enchant);
+
+                if (level2 == null || !level1.equals(level2)) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         if (item1.getItemMeta().hasEnchants()) {
@@ -201,6 +230,19 @@ public class ItemStackHelper {
             }
         });
 
+
+        if ((material == Material.PLAYER_HEAD || material == Material.PLAYER_WALL_HEAD) && section.contains("texture")) {
+            String texture = section.getString("texture");
+            item.editMeta(SkullMeta.class, skullMeta -> {
+                UUID uuid = UUID.randomUUID();
+                PlayerProfile profile = Bukkit.createProfile(uuid, uuid.toString().substring(0, 16));
+                profile.setProperty(new ProfileProperty("textures", texture));
+                skullMeta.setPlayerProfile(profile);
+            });
+        }
+
+
+
         return item;
     }
 
@@ -225,6 +267,7 @@ public class ItemStackHelper {
         private List<String> lore = new ArrayList<>();
         private boolean glow = false;
         private List<ItemFlag> itemFlags = new ArrayList<>();
+        private int customModelData = 0;
 
         public Builder material(Material material) {
             this.material = material;
@@ -233,6 +276,11 @@ public class ItemStackHelper {
 
         public Builder amount(int amount) {
             this.amount = Math.max(1, Math.min(64, amount));
+            return this;
+        }
+
+        public Builder customModelData(int data) {
+            this.customModelData = data;
             return this;
         }
 
@@ -298,6 +346,10 @@ public class ItemStackHelper {
                 if (glow) {
                     meta.addEnchant(Enchantment.LUCK_OF_THE_SEA, 1, true);
                     meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+                }
+
+                if (customModelData > 0) {
+                    meta.setCustomModelData(customModelData);
                 }
 
                 for (ItemFlag flag : itemFlags) {

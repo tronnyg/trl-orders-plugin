@@ -11,50 +11,34 @@ import com.notpatch.nlib.util.ColorUtil;
 import org.bukkit.Material;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class OrderTakeMenu extends FastInv {
 
     private final NOrder main;
-
     private final Order order;
-    private final Map<Integer, ItemStack> deliveredItems;
 
     public OrderTakeMenu(Order order) {
         super(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration()
                         .getInt("order-take-menu.size"),
                 ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration()
                         .getConfiguration().getString("order-take-menu.title")));
-        main = NOrder.getInstance();
+        this.main = NOrder.getInstance();
         this.order = order;
-        this.deliveredItems = new HashMap<>();
 
-        int remainingItems = order.getDelivered() - order.getCollected();
-        int stackIndex = 0;
-
-        while (remainingItems > 0) {
-            ItemStack item = order.getItem().clone();
-            int stackSize = Math.min(64, remainingItems);
-            item.setAmount(stackSize);
-            this.deliveredItems.put(stackIndex++, item);
-            remainingItems -= stackSize;
-        }
-
-        loadMenuItems();
-        loadDeliveredItems();
+        setupMenu();
     }
 
-    private void loadMenuItems() {
-        Configuration config = main.getConfigurationManager()
-                .getMenuConfiguration().getConfiguration();
+    private void setupMenu() {
+        Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
 
         ConfigurationSection fillerSection = config.getConfigurationSection("order-take-menu.items.filler");
         if (fillerSection != null) {
@@ -77,9 +61,36 @@ public class OrderTakeMenu extends FastInv {
             setItem(takeAllSection.getInt("slot"), takeAllItem, e -> handleTakeAll((Player) e.getWhoClicked()));
         }
 
+        updateInfoItem();
+        loadDeliveredItems();
+    }
+
+    private void updateInfoItem() {
+        Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
         ConfigurationSection infoSection = config.getConfigurationSection("order-take-menu.items.info");
+
         if (infoSection != null) {
             ItemStack infoItem = ItemStackHelper.fromSection(infoSection);
+            ItemMeta meta = infoItem.getItemMeta();
+
+            if (meta != null && meta.hasLore()) {
+                List<String> lore = new ArrayList<>();
+                int collected = order.getCollected();
+                int delivered = order.getDelivered();
+                int total = order.getAmount();
+
+                for (String line : meta.getLore()) {
+                    String processedLine = line
+                            .replace("%collected%", String.valueOf(collected))
+                            .replace("%delivered%", String.valueOf(delivered))
+                            .replace("%total%", String.valueOf(total));
+                    lore.add(ColorUtil.hexColor(processedLine));
+                }
+
+                meta.setLore(lore);
+                infoItem.setItemMeta(meta);
+            }
+
             setItem(infoSection.getInt("slot"), infoItem);
         }
     }
@@ -89,45 +100,73 @@ public class OrderTakeMenu extends FastInv {
                 .getMenuConfiguration().getConfiguration()
                 .getIntegerList("order-take-menu.delivery-slots");
 
+        for (int slot : slots) {
+            getInventory().setItem(slot, null);
+        }
+
+        int remainingAmount = order.getDelivered() - order.getCollected();
         int slotIndex = 0;
-        for (ItemStack item : deliveredItems.values()) {
-            if (slotIndex >= slots.size()) break;
-            if (item.getAmount() > 0) {
-                setItem(slots.get(slotIndex), item, this::handleItemClick);
-                slotIndex++;
-            }
+        int maxStackSize = order.getItem().getMaxStackSize();
+
+        while (remainingAmount > 0 && slotIndex < slots.size()) {
+            ItemStack item = order.getItem().clone();
+            int stackSize = Math.min(maxStackSize, remainingAmount);
+            item.setAmount(stackSize);
+
+            int finalSlot = slots.get(slotIndex);
+            setItem(finalSlot, item, e -> handleItemClick(e, finalSlot));
+
+            remainingAmount -= stackSize;
+            slotIndex++;
         }
     }
 
-    private void handleItemClick(InventoryClickEvent e) {
+    private void handleItemClick(InventoryClickEvent e, int clickedSlot) {
         e.setCancelled(true);
-        HumanEntity player = e.getWhoClicked();
-        ItemStack clickedItem = e.getCurrentItem();
+        Player player = (Player) e.getWhoClicked();
+        ItemStack clickedItem = getInventory().getItem(clickedSlot);
 
-        if (clickedItem == null || clickedItem.getType() == Material.AIR || clickedItem.getType() != order.getMaterial())
-            return;
-
-        if (e.getClick() == ClickType.DROP) {
-            player.getWorld().dropItemNaturally(player.getLocation(), clickedItem);
-            e.setCurrentItem(null);
-        } else if (e.isLeftClick()) {
-            if (player.getInventory().firstEmpty() != -1) {
-                player.getInventory().addItem(clickedItem);
-                e.setCurrentItem(null);
-            } else {
-                player.sendMessage(LanguageLoader.getMessage("inventory-full"));
-                return;
-            }
-        } else {
+        if (clickedItem == null || clickedItem.getType() == Material.AIR) {
             return;
         }
 
-        order.addCollected(clickedItem.getAmount());
-        main.getOrderLogger().logItemCollection(order, clickedItem.getAmount());
+        int itemAmount = clickedItem.getAmount();
 
-        checkAndArchiveOrder(player);
+        if (e.getClick() == ClickType.DROP) {
+            getInventory().setItem(clickedSlot, null);
 
-        ((Player) player).updateInventory();
+            order.addCollected(itemAmount);
+            main.getOrderLogger().logItemCollection(order, itemAmount);
+
+            player.getWorld().dropItemNaturally(player.getLocation(), clickedItem.clone());
+
+            NSound.success(player);
+            checkAndArchiveOrder(player);
+
+            updateInfoItem();
+            loadDeliveredItems();
+            return;
+        }
+
+        if (e.isLeftClick()) {
+            HashMap<Integer, ItemStack> leftover = player.getInventory().addItem(clickedItem.clone());
+
+            if (leftover.isEmpty()) {
+                getInventory().setItem(clickedSlot, null);
+
+                order.addCollected(itemAmount);
+                main.getOrderLogger().logItemCollection(order, itemAmount);
+
+                NSound.success(player);
+                checkAndArchiveOrder(player);
+
+                updateInfoItem();
+                loadDeliveredItems();
+            } else {
+                player.sendMessage(LanguageLoader.getMessage("inventory-full"));
+                NSound.error(player);
+            }
+        }
     }
 
     private void handleTakeAll(Player player) {
@@ -141,27 +180,45 @@ public class OrderTakeMenu extends FastInv {
 
         for (int slot : slots) {
             ItemStack item = getInventory().getItem(slot);
-            if (item == null || item.getType() == Material.AIR || item.getType() != order.getMaterial()) {
+
+            if (item == null || item.getType() == Material.AIR) {
                 continue;
             }
 
             hasItems = true;
 
-            if (player.getInventory().firstEmpty() == -1) {
+            HashMap<Integer, ItemStack> leftover = player.getInventory().addItem(item.clone());
+
+            if (leftover.isEmpty()) {
+                totalCollected += item.getAmount();
+                getInventory().setItem(slot, null);
+            } else {
+                ItemStack remaining = leftover.get(0);
+                int addedAmount = item.getAmount() - remaining.getAmount();
+
+                if (addedAmount > 0) {
+                    totalCollected += addedAmount;
+                }
+
                 inventoryFull = true;
                 break;
             }
-
-            player.getInventory().addItem(item);
-            totalCollected += item.getAmount();
-            getInventory().setItem(slot, null);
         }
 
         if (totalCollected > 0) {
             order.addCollected(totalCollected);
             main.getOrderLogger().logItemCollection(order, totalCollected);
+            main.getLogger().info("Collected (Take All): " + totalCollected);
+
+            if (inventoryFull) {
+                player.sendMessage(LanguageLoader.getMessage("inventory-full"));
+            }
+
             NSound.success(player);
             checkAndArchiveOrder(player);
+
+            updateInfoItem();
+            loadDeliveredItems();
         } else if (inventoryFull) {
             player.sendMessage(LanguageLoader.getMessage("inventory-full"));
             NSound.error(player);
@@ -169,18 +226,14 @@ public class OrderTakeMenu extends FastInv {
             player.sendMessage(LanguageLoader.getMessage("no-items-to-collect"));
             NSound.error(player);
         }
-
-        player.updateInventory();
     }
 
-    private void checkAndArchiveOrder(HumanEntity player) {
-        if (order.getStatus() == OrderStatus.COMPLETED) {
-            if (order.getCollected() >= order.getDelivered()) {
-                order.setStatus(OrderStatus.ARCHIVED);
-                main.getOrderLogger().logOrderArchived(order);
-                player.closeInventory();
-                main.getOrderManager().removeOrder(order);
-            }
+    private void checkAndArchiveOrder(Player player) {
+        if (order.getStatus() == OrderStatus.COMPLETED && order.getCollected() >= order.getDelivered()) {
+            order.setStatus(OrderStatus.ARCHIVED);
+            main.getOrderLogger().logOrderArchived(order);
+            player.closeInventory();
+            main.getOrderManager().removeOrder(order);
         }
     }
 

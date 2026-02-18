@@ -16,6 +16,7 @@ lang: en_US
 
 permissions:
   order: norder.use
+  order-cancel: norder.cancel
   order-menu: norder.menu
   order-admin: norder.admin
   # norder.limit.<number> | default 5
@@ -37,7 +38,7 @@ commands:
 
 settings:
   # Enable debug mode for detailed logging
-  debug: true
+  debug: false
   highlight-fee: 2.5
   send-webhooks: false
   min-price-per-item: 0.01

@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class MMOItemsProvider implements CustomItemProvider {
 
@@ -149,10 +150,62 @@ public class MMOItemsProvider implements CustomItemProvider {
         try {
             String id1 = getCustomItemId(item1);
             String id2 = getCustomItemId(item2);
-            return id1 != null && id1.equals(id2);
+            if (id1 == null || !id1.equals(id2)) return false;
+
+            return compareMMOItemStats(item1, item2);
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private boolean compareMMOItemStats(ItemStack item1, ItemStack item2) {
+        try {
+            NBTItem nbt1 = NBTItem.get(item1);
+            NBTItem nbt2 = NBTItem.get(item2);
+
+            Set<String> tags1 = nbt1.getTags();
+            Set<String> tags2 = nbt2.getTags();
+
+            for (String tag : tags1) {
+                if (isStatTag(tag)) {
+                    Object value1 = nbt1.getDouble(tag);
+                    Object value2 = nbt2.getDouble(tag);
+
+                    if (!tags2.contains(tag)) return false;
+                    if (!value1.equals(value2)) return false;
+                }
+            }
+
+            for (String tag : tags2) {
+                if (isStatTag(tag) && !tags1.contains(tag)) {
+                    return false;
+                }
+            }
+
+            String gems1 = nbt1.getString("MMOITEMS_GEM_STONES");
+            String gems2 = nbt2.getString("MMOITEMS_GEM_STONES");
+            if (gems1 != null && !gems1.equals(gems2)) return false;
+            if (gems2 != null && gems1 == null) return false;
+
+            return true;
+        } catch (Exception e) {
+            if (Settings.DEBUG) {
+                NLogger.error("Error comparing MMOItem stats: " + e.getMessage());
+            }
+            return false;
+        }
+    }
+
+    private boolean isStatTag(String tag) {
+        if (tag == null) return false;
+        if (!tag.startsWith("MMOITEMS_")) return false;
+
+        if (tag.equals("MMOITEMS_ITEM_ID")) return false;
+        if (tag.equals("MMOITEMS_ITEM_TYPE")) return false;
+        if (tag.equals("MMOITEMS_ITEM_UUID")) return false;
+        if (tag.equals("MMOITEMS_REVISION_ID")) return false;
+
+        return true;
     }
 
     @Override

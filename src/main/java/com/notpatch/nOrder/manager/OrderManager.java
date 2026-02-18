@@ -261,7 +261,6 @@ public class OrderManager {
             main.getPlayerStatsManager().getStatistics(order.getPlayerId()).addTotalOrders(1);
             main.getOrderLogger().logOrderCreated(order, totalPrice);
             NSound.success(player);
-            broadcastOrder(order, totalPrice);
             return;
         }
 
@@ -291,7 +290,6 @@ public class OrderManager {
         main.getPlayerStatsManager().getStatistics(order.getPlayerId()).addTotalOrders(1);
         main.getOrderLogger().logOrderCreated(order, totalPrice);
         NSound.success(player);
-        broadcastOrder(order, totalPrice);
         DiscordWebhook webhook = main.getWebhookManager().getWebhooks().get("order-create");
         if (webhook != null) {
             DiscordWebhook clonedWebhook = webhook.clone();
@@ -357,22 +355,46 @@ public class OrderManager {
 
     public void cancelOrder(Order order) {
         OfflinePlayer offlinePlayer = main.getServer().getOfflinePlayer(order.getPlayerId());
-        if (PlayerUtil.getPlayer(offlinePlayer) == null) {
-            return;
-        }
         Player player = PlayerUtil.getPlayer(offlinePlayer);
 
-        double refundAmount = (order.getAmount() - order.getDelivered()) * order.getPrice();
-        main.getEconomy().depositPlayer(offlinePlayer, refundAmount);
-        main.getOrderLogger().logOrderCancelled(order, refundAmount);
-        removeOrder(order);
-        if (player.isOnline()) {
-            player.sendMessage(LanguageLoader.getMessage("order-cancelled")
-                    .replace("%id%", order.getId())
-                    .replace("%material%", StringUtil.formatMaterialName(order.getMaterial()))
-                    .replace("%amount%", String.valueOf(order.getAmount() - order.getDelivered()))
-                    .replace("%refund_amount%", String.format("%.2f", refundAmount)));
-            NSound.success(player);
+        if (player == null) {
+            return;
+        }
+
+        if (!player.hasPermission(Settings.ORDER_CANCEL_PERMISSION)) {
+            return;
+        }
+
+        if (!order.tryLock()) {
+            player.sendMessage(LanguageLoader.getMessage("order-processing"));
+            NSound.error(player);
+            return;
+        }
+
+        try {
+            if (order.getStatus() != OrderStatus.ACTIVE) {
+                player.sendMessage(LanguageLoader.getMessage("order-not-active"));
+                NSound.error(player);
+                return;
+            }
+
+            double refundAmount = (order.getAmount() - order.getDelivered()) * order.getPrice();
+            main.getEconomy().depositPlayer(offlinePlayer, refundAmount);
+            main.getOrderLogger().logOrderCancelled(order, refundAmount);
+
+            order.setStatus(OrderStatus.CANCELLED);
+            removeOrder(order);
+
+            if (player.isOnline()) {
+                player.sendMessage(LanguageLoader.getMessage("order-cancelled")
+                        .replace("%id%", order.getId())
+                        .replace("%material%", StringUtil.formatMaterialName(order.getMaterial()))
+                        .replace("%amount%", String.valueOf(order.getAmount() - order.getDelivered()))
+                        .replace("%refund_amount%", String.format("%.2f", refundAmount)));
+                NSound.success(player);
+            }
+        } finally {
+            order.unlock();
         }
 
     }
@@ -427,29 +449,6 @@ public class OrderManager {
         return sb.toString();
     }
 
-    private void broadcastOrder(Order order, double totalPrice) {
-        if (!Settings.BROADCAST_ENABLED) return;
-        if (totalPrice < Settings.BROADCAST_MIN_TOTAL_PRICE) return;
-
-        String playerName = order.getPlayerName();
-
-        if (playerName == null || playerName.isEmpty()) {
-            OfflinePlayer offlinePlayer = main.getServer().getOfflinePlayer(order.getPlayerId());
-            playerName = offlinePlayer.getName();
-            if (playerName == null) {
-                playerName = "";
-            }
-        }
-
-        String message = LanguageLoader.getMessage("order-broadcast")
-                .replace("%player%", playerName)
-                .replace("%material%", StringUtil.formatMaterialName(order.getMaterial()))
-                .replace("%amount%", String.valueOf(order.getAmount()))
-                .replace("%price%", String.format("%.2f", order.getPrice()))
-                .replace("%total_price%", String.format("%.2f", totalPrice));
-
-        main.getServer().broadcast(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacyAmpersand().deserialize(message));
-    }
 
     public void cleanExpiredOrders() {
         List<Order> expiredOrders = new ArrayList<>();

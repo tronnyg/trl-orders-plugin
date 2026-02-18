@@ -19,6 +19,7 @@ public class Settings {
 
     public static String ORDER_MENU_PERMISSION;
     public static String ORDER_PERMISSION;
+    public static String ORDER_CANCEL_PERMISSION;
 
     public static String ORDER_ADMIN_PERMISSION;
 
@@ -62,6 +63,7 @@ public class Settings {
     public static void loadSettings() {
         Configuration config = NOrder.getInstance().getConfig();
         ORDER_PERMISSION = config.getString("permissions.order", "norder.use");
+        ORDER_CANCEL_PERMISSION = config.getString("permissions.order-cancel", "norder.cancel");
         ORDER_MENU_PERMISSION = config.getString("permissions.order-menu", "norder.menu");
         ORDER_ALIASES = config.getStringList("commands.order.aliases");
         ORDER_LIMIT_PERMISSION = config.getString("permissions.order-limit", "norder.limit");
