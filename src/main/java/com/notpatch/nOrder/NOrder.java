@@ -1,7 +1,7 @@
 package com.notpatch.nOrder;
 
+import com.notpatch.nOrder.command.ContractsCommand;
 import com.notpatch.nOrder.command.OrderAdminCommand;
-import com.notpatch.nOrder.command.OrderCategoryCommand;
 import com.notpatch.nOrder.command.OrderCommand;
 import com.notpatch.nOrder.database.DatabaseManager;
 import com.notpatch.nOrder.gui.NewOrderMenu;
@@ -30,7 +30,7 @@ public final class NOrder extends JavaPlugin {
     private OrderManager orderManager;
 
     @Getter
-    private AdminOrderManager adminOrderManager;
+    private ContractManager contractManager;
 
     @Getter
     private PlayerStatisticsManager playerStatsManager;
@@ -69,7 +69,7 @@ public final class NOrder extends JavaPlugin {
     private CustomItemManager customItemManager;
 
     @Getter
-    private OrderCategoryManager orderCategoryManager;
+    private ContractCategoryManager contractCategoryManager;
 
     @Override
     public void onEnable() {
@@ -116,8 +116,8 @@ public final class NOrder extends JavaPlugin {
         orderManager = new OrderManager(this);
         orderManager.loadOrders();
 
-        adminOrderManager = new AdminOrderManager(this);
-        adminOrderManager.loadAdminOrders();
+        contractManager = new ContractManager(this);
+        contractManager.loadcontracts();
 
         playerStatsManager = new PlayerStatisticsManager(this);
         playerStatsManager.loadStatistics();
@@ -125,8 +125,8 @@ public final class NOrder extends JavaPlugin {
         orderManager.startCleanupTask();
         orderManager.startAutoSaveTask();
 
-        adminOrderManager.startCooldownTask();
-        adminOrderManager.startCleanupTask();
+        contractManager.startCooldownTask();
+        contractManager.startCleanupTask();
 
         languageLoader = new LanguageLoader();
         languageLoader.loadLangs();
@@ -144,15 +144,15 @@ public final class NOrder extends JavaPlugin {
 
         chatInputManager = new ChatInputManager();
         newOrderMenuManager = new NewOrderMenuManager();
-        orderCategoryManager = new OrderCategoryManager(this);
-        orderCategoryManager.loadCategories();
+        contractCategoryManager = new ContractCategoryManager(this);
+        contractCategoryManager.loadCategories();
 
 
         getServer().getPluginManager().registerEvents(new NewOrderMenu(), this);
 
         registerCommand("order", Settings.ORDER_ALIASES, new OrderCommand());
         registerCommand("orderadmin", Settings.ORDER_ADMIN_ALIASES, new OrderAdminCommand());
-        registerCommand("ordercategory", new OrderCategoryCommand());
+        registerCommand("contract", new ContractsCommand());
 
         getServer().getPluginManager().registerEvents(new ChatInputListener(this), this);
 
@@ -167,7 +167,8 @@ public final class NOrder extends JavaPlugin {
     @Override
     public void onDisable() {
         if (orderManager != null) orderManager.saveOrders();
-        if (adminOrderManager != null) adminOrderManager.saveAdminOrders();
+        if (contractManager != null) contractManager.saveContracts();
+        if (contractCategoryManager != null) contractCategoryManager.saveCategories();
         if (playerStatsManager != null) playerStatsManager.saveStatistics();
         if (databaseManager != null) databaseManager.disconnect();
         if (configurationManager != null) configurationManager.saveConfigurations();

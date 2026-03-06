@@ -21,6 +21,7 @@ public abstract class BaseOrder {
     protected final LocalDateTime expirationDate;
     protected final boolean highlight;
     protected OrderStatus status;
+    private volatile boolean processing = false;
 
     public BaseOrder(String id, ItemStack item, String customItemId, int amount, double price,
                      int delivered, int collected, LocalDateTime createdAt, LocalDateTime expirationDate,
@@ -40,6 +41,22 @@ public abstract class BaseOrder {
 
     public boolean isCustomItem() {
         return customItemId != null && !customItemId.isEmpty();
+    }
+
+    public boolean tryLock() {
+        synchronized (this) {
+            if (processing) {
+                return false;
+            }
+            processing = true;
+            return true;
+        }
+    }
+
+    public void unlock() {
+        synchronized (this) {
+            processing = false;
+        }
     }
 
     public int getRemaining() {

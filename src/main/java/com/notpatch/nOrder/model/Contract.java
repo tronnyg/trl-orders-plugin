@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class AdminOrder extends BaseOrder {
+public class Contract extends BaseOrder {
 
     private final String categoryId;
     private final String customName;
@@ -18,11 +18,11 @@ public class AdminOrder extends BaseOrder {
     private LocalDateTime cooldownEndsAt;
     private LocalDateTime lastCompletedAt;
 
-    public AdminOrder(String id, ItemStack item, String customItemId, int amount, double price,
-                      int delivered, int collected, LocalDateTime createdAt, LocalDateTime expirationDate,
-                      boolean highlight, OrderStatus status, String categoryId, String customName,
-                      long cooldownDuration, boolean repeatable, LocalDateTime cooldownEndsAt,
-                      LocalDateTime lastCompletedAt) {
+    public Contract(String id, ItemStack item, String customItemId, int amount, double price,
+                    int delivered, int collected, LocalDateTime createdAt, LocalDateTime expirationDate,
+                    boolean highlight, OrderStatus status, String categoryId, String customName,
+                    long cooldownDuration, boolean repeatable, LocalDateTime cooldownEndsAt,
+                    LocalDateTime lastCompletedAt) {
         super(id, item, customItemId, amount, price, delivered, collected, createdAt, expirationDate, highlight, status);
         this.categoryId = categoryId;
         this.customName = customName;

@@ -25,7 +25,7 @@ public class ItemSelectMenu extends FastInv {
 
     private final NOrder main;
 
-    private final Object parentMenu; // Can be NewOrderMenu or NewAdminOrderMenu
+    private final Object parentMenu;
     private int currentPage = 1;
     private final List<Material> availableItems;
     private List<ItemStack> customItems;
@@ -57,7 +57,7 @@ public class ItemSelectMenu extends FastInv {
         updateItems();
     }
 
-    public ItemSelectMenu(NewAdminOrderMenu parentMenu) {
+    public ItemSelectMenu(NewContractMenu parentMenu) {
         super(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getInt("item-select-menu.size"),
                 ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("item-select-menu.title")));
 
@@ -136,21 +136,20 @@ public class ItemSelectMenu extends FastInv {
                         if (parentMenu instanceof NewOrderMenu newOrderMenu) {
                             newOrderMenu.setSelectedItem(material);
                             new EnchantSelectMenu(newOrderMenu, material).open((Player) e.getWhoClicked());
-                        } else if (parentMenu instanceof NewAdminOrderMenu newAdminOrderMenu) {
-                            newAdminOrderMenu.setSelectedItem(material);
-                            // TODO: Add enchant select for admin orders if needed
-                            newAdminOrderMenu.updateMenuItems();
-                            newAdminOrderMenu.open((Player) e.getWhoClicked());
+                        } else if (parentMenu instanceof NewContractMenu newContractMenu) {
+                            newContractMenu.setSelectedItem(material);
+                            newContractMenu.updateMenuItems();
+                            newContractMenu.open((Player) e.getWhoClicked());
                         }
                     } else {
                         if (parentMenu instanceof NewOrderMenu newOrderMenu) {
                             newOrderMenu.setSelectedItem(material);
                             newOrderMenu.updateMenuItems();
                             newOrderMenu.open((Player) e.getWhoClicked());
-                        } else if (parentMenu instanceof NewAdminOrderMenu newAdminOrderMenu) {
-                            newAdminOrderMenu.setSelectedItem(material);
-                            newAdminOrderMenu.updateMenuItems();
-                            newAdminOrderMenu.open((Player) e.getWhoClicked());
+                        } else if (parentMenu instanceof NewContractMenu newContractMenu) {
+                            newContractMenu.setSelectedItem(material);
+                            newContractMenu.updateMenuItems();
+                            newContractMenu.open((Player) e.getWhoClicked());
                         }
                     }
                 });
@@ -160,10 +159,10 @@ public class ItemSelectMenu extends FastInv {
                         newOrderMenu.setSelectedItem(customItem);
                         newOrderMenu.updateMenuItems();
                         newOrderMenu.open((Player) e.getWhoClicked());
-                    } else if (parentMenu instanceof NewAdminOrderMenu newAdminOrderMenu) {
-                        newAdminOrderMenu.setSelectedItem(customItem);
-                        newAdminOrderMenu.updateMenuItems();
-                        newAdminOrderMenu.open((Player) e.getWhoClicked());
+                    } else if (parentMenu instanceof NewContractMenu newContractMenu) {
+                        newContractMenu.setSelectedItem(customItem);
+                        newContractMenu.updateMenuItems();
+                        newContractMenu.open((Player) e.getWhoClicked());
                     }
                 });
             }

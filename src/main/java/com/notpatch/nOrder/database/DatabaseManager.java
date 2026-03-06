@@ -180,7 +180,7 @@ public class DatabaseManager {
                     total_earnings DOUBLE DEFAULT 0.0
                 );
                 
-                CREATE TABLE IF NOT EXISTS admin_orders (
+                CREATE TABLE IF NOT EXISTS contracts (
                     order_id VARCHAR(8) NOT NULL PRIMARY KEY,
                     material VARCHAR(50) NOT NULL,
                     custom_item_id VARCHAR(100) DEFAULT NULL,
@@ -203,6 +203,13 @@ public class DatabaseManager {
                     INDEX idx_status (status),
                     INDEX idx_category_id (category_id),
                     INDEX idx_cooldown_ends_at (cooldown_ends_at)
+                );
+                
+                CREATE TABLE IF NOT EXISTS contract_categories (
+                    category_id VARCHAR(36) NOT NULL PRIMARY KEY,
+                    category_name VARCHAR(255) NOT NULL,
+                    display_item VARCHAR(100) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
                 """;
 
@@ -233,8 +240,8 @@ public class DatabaseManager {
                     total_earnings DOUBLE DEFAULT 0.0
                 );
                 
-                CREATE TABLE IF NOT EXISTS admin_orders (
-                    order_id VARCHAR(8) NOT NULL PRIMARY KEY,
+                CREATE TABLE IF NOT EXISTS contracts (
+                    contract_id VARCHAR(8) NOT NULL PRIMARY KEY,
                     material VARCHAR(50) NOT NULL,
                     custom_item_id VARCHAR(100) DEFAULT NULL,
                     enchantments TEXT DEFAULT NULL,
@@ -252,6 +259,13 @@ public class DatabaseManager {
                     repeatable BOOLEAN DEFAULT FALSE,
                     cooldown_ends_at TIMESTAMP DEFAULT NULL,
                     last_completed_at TIMESTAMP DEFAULT NULL
+                );
+                
+                CREATE TABLE IF NOT EXISTS contract_categories (
+                    category_id VARCHAR(36) NOT NULL PRIMARY KEY,
+                    category_name VARCHAR(255) NOT NULL,
+                    display_item VARCHAR(100) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
                 """;
 
@@ -266,38 +280,21 @@ public class DatabaseManager {
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_expires_at ON orders(expires_at)");
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_status ON orders(status)");
                     stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_player_id ON orders(player_id)");
-                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_admin_expires_at ON admin_orders(expires_at)");
-                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_admin_status ON admin_orders(status)");
-                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_admin_category_id ON admin_orders(category_id)");
-                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_admin_cooldown_ends_at ON admin_orders(cooldown_ends_at)");
+                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_contract_expires_at ON contracts(expires_at)");
+                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_contract_status ON contracts(status)");
+                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_contract_category_id ON contracts(category_id)");
+                    stmt.executeUpdate("CREATE INDEX IF NOT EXISTS idx_contract_cooldown_ends_at ON contracts(cooldown_ends_at)");
                 } catch (SQLException e) {
                     NLogger.warn("Failed to create indexes on SQLite: " + e.getMessage());
                 }
             }
 
-            NLogger.info("Created orders and admin_orders tables successfully.");
+            NLogger.info("Created orders and contracts tables successfully.");
 
             runMigrations(conn);
 
         } catch (SQLException e) {
             NLogger.error("Failed to create tables: " + e.getMessage());
-        }
-
-        String createCategoriesTable = """
-    CREATE TABLE IF NOT EXISTS order_categories (
-        category_id VARCHAR(36) PRIMARY KEY,
-        category_name VARCHAR(255) NOT NULL,
-        display_item VARCHAR(100),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """;
-
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement()) {
-            stmt.execute(createCategoriesTable);
-            NLogger.info("Order categories table ready.");
-        } catch (SQLException e) {
-            NLogger.error("Error creating order_categories table: " + e.getMessage());
         }
     }
 

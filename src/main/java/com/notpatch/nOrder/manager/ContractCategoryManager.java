@@ -2,7 +2,7 @@ package com.notpatch.nOrder.manager;
 
 import com.notpatch.nOrder.NOrder;
 import com.notpatch.nOrder.database.DatabaseManager;
-import com.notpatch.nOrder.model.OrderCategory;
+import com.notpatch.nOrder.model.ContractCategory;
 import com.notpatch.nlib.util.NLogger;
 import lombok.Getter;
 
@@ -14,18 +14,15 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class OrderCategoryManager {
+public class ContractCategoryManager {
 
     private final NOrder main;
     private final DatabaseManager databaseManager;
 
     @Getter
-    private final Map<String, OrderCategory> categories = new ConcurrentHashMap<>();
+    private final Map<String, ContractCategory> categories = new ConcurrentHashMap<>();
 
-    // Maps category ID to list of order IDs
-    private final Map<String, List<String>> categoryOrders = new ConcurrentHashMap<>();
-
-    public OrderCategoryManager(NOrder main) {
+    public ContractCategoryManager(NOrder main) {
         this.main = main;
         this.databaseManager = main.getDatabaseManager();
     }
@@ -36,7 +33,7 @@ public class OrderCategoryManager {
             return;
         }
 
-        String query = "SELECT * FROM order_categories";
+        String query = "SELECT * FROM contract_categories";
 
         try (Connection conn = databaseManager.getDataSource().getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
@@ -50,7 +47,7 @@ public class OrderCategoryManager {
                 String displayItem = rs.getString("display_item");
                 LocalDateTime createdAt = rs.getTimestamp("created_at").toLocalDateTime();
 
-                OrderCategory category = new OrderCategory(categoryId, categoryName, displayItem, createdAt);
+                ContractCategory category = new ContractCategory(categoryId, categoryName, displayItem, createdAt);
                 categories.put(categoryId, category);
             }
 
@@ -58,44 +55,29 @@ public class OrderCategoryManager {
 
         } catch (SQLException e) {
             NLogger.error("Error loading categories: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        loadCategoryOrders();
-    }
-
-    private void loadCategoryOrders() {
-        categoryOrders.clear();
-
-        // Only load admin orders from admin_orders table
-        String query = "SELECT order_id, category_id FROM admin_orders WHERE category_id IS NOT NULL";
-
-        try (Connection conn = databaseManager.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                String orderId = rs.getString("order_id");
-                String categoryId = rs.getString("category_id");
-
-                categoryOrders.computeIfAbsent(categoryId, k -> new ArrayList<>()).add(orderId);
-            }
-
-        } catch (SQLException e) {
-            NLogger.error("Error loading admin category orders: " + e.getMessage());
         }
     }
 
-    public void saveCategories() {
+    public ContractCategory createCategory(String categoryId, String categoryName, String displayItem) {
+        // Check if category ID already exists
+        if (categories.containsKey(categoryId)) {
+            return null;
+        }
+
+        ContractCategory category = new ContractCategory(categoryId, categoryName, displayItem);
+        categories.put(categoryId, category);
+
+        // If DB connection isn't valid, keep it in-memory but log and return
         if (!databaseManager.isConnectionValid()) {
-            NLogger.error("Database connection is null or invalid. Cannot save categories.");
-            return;
+            NLogger.error("Database connection is null or invalid. Category will be kept in-memory only.");
+            return category;
         }
 
+        // Insert only the newly created category into the database (use upsert semantics)
         String query;
         if (databaseManager.isUsingSQLite()) {
             query = """
-                INSERT INTO order_categories (category_id, category_name, display_item, created_at)
+                INSERT INTO contract_categories (category_id, category_name, display_item, created_at)
                 VALUES (?, ?, ?, ?)
                 ON CONFLICT(category_id) DO UPDATE SET
                 category_name = excluded.category_name,
@@ -103,7 +85,7 @@ public class OrderCategoryManager {
                 """;
         } else {
             query = """
-                INSERT INTO order_categories (category_id, category_name, display_item, created_at)
+                INSERT INTO contract_categories (category_id, category_name, display_item, created_at)
                 VALUES (?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
                 category_name = VALUES(category_name),
@@ -114,41 +96,20 @@ public class OrderCategoryManager {
         try (Connection conn = databaseManager.getDataSource().getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
-            for (OrderCategory category : categories.values()) {
-                stmt.setString(1, category.getCategoryId());
-                stmt.setString(2, category.getCategoryName());
-                stmt.setString(3, category.getDisplayItem());
-                stmt.setTimestamp(4, java.sql.Timestamp.valueOf(category.getCreatedAt()));
-                stmt.addBatch();
-            }
+            stmt.setString(1, category.getCategoryId());
+            stmt.setString(2, category.getCategoryName());
+            stmt.setString(3, category.getDisplayItem());
+            stmt.setTimestamp(4, java.sql.Timestamp.valueOf(category.getCreatedAt()));
 
-            stmt.executeBatch();
-            NLogger.info("Saved " + categories.size() + " categories.");
+            stmt.executeUpdate();
+            return category;
 
         } catch (SQLException e) {
-            NLogger.error("Error saving categories: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    public OrderCategory createCategory(String categoryName, String displayItem) {
-        String categoryId = UUID.randomUUID().toString();
-        return createCategory(categoryId, categoryName, displayItem);
-    }
-
-    public OrderCategory createCategory(String categoryId, String categoryName, String displayItem) {
-        // Check if category ID already exists
-        if (categories.containsKey(categoryId)) {
+            NLogger.error("Error inserting category into database: " + e.getMessage());
+            // Keep in-memory consistent with DB failure by removing the category
+            categories.remove(categoryId);
             return null;
         }
-
-        OrderCategory category = new OrderCategory(categoryId, categoryName, displayItem);
-        categories.put(categoryId, category);
-
-        // Save immediately
-        saveCategories();
-
-        return category;
     }
 
     public boolean updateCategory(String categoryId, String newCategoryName) {
@@ -156,10 +117,10 @@ public class OrderCategoryManager {
             return false;
         }
 
-        OrderCategory oldCategory = categories.get(categoryId);
+        ContractCategory oldCategory = categories.get(categoryId);
 
         // Create new category with updated name
-        OrderCategory updatedCategory = new OrderCategory(
+        ContractCategory updatedCategory = new ContractCategory(
                 categoryId,
                 newCategoryName,
                 oldCategory.getDisplayItem(),
@@ -170,7 +131,7 @@ public class OrderCategoryManager {
         categories.put(categoryId, updatedCategory);
 
         // Update in database
-        String query = "UPDATE order_categories SET category_name = ? WHERE category_id = ?";
+        String query = "UPDATE contract_categories SET category_name = ? WHERE category_id = ?";
 
         try (Connection conn = databaseManager.getDataSource().getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -193,9 +154,8 @@ public class OrderCategoryManager {
         }
 
         categories.remove(categoryId);
-        categoryOrders.remove(categoryId);
 
-        String query = "DELETE FROM order_categories WHERE category_id = ?";
+        String query = "DELETE FROM contract_categories WHERE category_id = ?";
 
         try (Connection conn = databaseManager.getDataSource().getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -203,7 +163,7 @@ public class OrderCategoryManager {
             stmt.setString(1, categoryId);
             stmt.executeUpdate();
 
-            String updateAdminQuery = "UPDATE admin_orders SET category_id = NULL WHERE category_id = ?";
+            String updateAdminQuery = "UPDATE contracts SET category_id = NULL WHERE category_id = ?";
             try (PreparedStatement updateAdminStmt = conn.prepareStatement(updateAdminQuery)) {
                 updateAdminStmt.setString(1, categoryId);
                 updateAdminStmt.executeUpdate();
@@ -217,50 +177,70 @@ public class OrderCategoryManager {
         }
     }
 
-    public OrderCategory getCategoryById(String categoryId) {
+    public ContractCategory getCategoryById(String categoryId) {
         return categories.get(categoryId);
     }
 
-    public OrderCategory getCategoryByName(String categoryName) {
+    public ContractCategory getCategoryByName(String categoryName) {
         return categories.values().stream()
                 .filter(cat -> cat.getCategoryName().equalsIgnoreCase(categoryName))
                 .findFirst()
                 .orElse(null);
     }
 
-    public List<com.notpatch.nOrder.model.AdminOrder> getAdminOrdersInCategory(String categoryId) {
-        if (main.getAdminOrderManager() == null) {
-            return new ArrayList<>();
-        }
-
-        return main.getAdminOrderManager().getAdminOrdersByCategory(categoryId);
+    public Collection<ContractCategory> getAllCategories() {
+        return categories.values();
     }
 
-    public void assignOrderToCategory(String orderId, String categoryId) {
-        // Remove from previous category if exists
-        categoryOrders.values().forEach(list -> list.remove(orderId));
-
-        // Add to new category
-        if (categoryId != null) {
-            categoryOrders.computeIfAbsent(categoryId, k -> new ArrayList<>()).add(orderId);
+    /**
+     * Save all categories from memory to the database in a single transaction.
+     * Intended to be run on plugin disable as a final sync/fallback.
+     */
+    public void saveCategories() {
+        if (!databaseManager.isConnectionValid()) {
+            NLogger.error("Database connection is null or invalid. Cannot save categories.");
+            return;
         }
 
-        // Update admin_orders table only
-        String query = "UPDATE admin_orders SET category_id = ? WHERE order_id = ?";
+        String query;
+        if (databaseManager.isUsingSQLite()) {
+            query = """
+                INSERT OR REPLACE INTO contract_categories (category_id, category_name, display_item, created_at)
+                VALUES (?, ?, ?, ?)
+                """;
+        } else {
+            query = """
+                INSERT INTO contract_categories (category_id, category_name, display_item, created_at)
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                category_name = VALUES(category_name),
+                display_item = VALUES(display_item)
+                """;
+        }
 
         try (Connection conn = databaseManager.getDataSource().getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
-            stmt.setString(1, categoryId);
-            stmt.setString(2, orderId);
-            stmt.executeUpdate();
+            conn.setAutoCommit(false);
+
+            for (ContractCategory cat : categories.values()) {
+                stmt.setString(1, cat.getCategoryId());
+                stmt.setString(2, cat.getCategoryName());
+                stmt.setString(3, cat.getDisplayItem());
+                if (cat.getCreatedAt() != null) {
+                    stmt.setTimestamp(4, java.sql.Timestamp.valueOf(cat.getCreatedAt()));
+                } else {
+                    stmt.setNull(4, java.sql.Types.TIMESTAMP);
+                }
+                stmt.addBatch();
+            }
+
+            stmt.executeBatch();
+            conn.commit();
 
         } catch (SQLException e) {
-            NLogger.error("Error assigning admin order to category: " + e.getMessage());
+            NLogger.error("Error saving all categories: " + e.getMessage());
+            e.printStackTrace();
         }
-    }
-
-    public Collection<OrderCategory> getAllCategories() {
-        return categories.values();
     }
 }

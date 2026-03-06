@@ -2,8 +2,6 @@ package com.notpatch.nOrder.gui;
 
 import com.notpatch.nOrder.LanguageLoader;
 import com.notpatch.nOrder.NOrder;
-import com.notpatch.nOrder.model.AdminOrder;
-import com.notpatch.nOrder.model.BaseOrder;
 import com.notpatch.nOrder.model.Order;
 import com.notpatch.nOrder.model.OrderStatus;
 import com.notpatch.nOrder.util.ItemStackHelper;

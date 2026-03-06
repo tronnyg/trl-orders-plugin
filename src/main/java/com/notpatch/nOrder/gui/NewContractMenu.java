@@ -1,9 +1,7 @@
 package com.notpatch.nOrder.gui;
 
-import com.notpatch.nOrder.LanguageLoader;
 import com.notpatch.nOrder.NOrder;
-import com.notpatch.nOrder.Settings;
-import com.notpatch.nOrder.model.AdminOrder;
+import com.notpatch.nOrder.model.Contract;
 import com.notpatch.nOrder.model.OrderStatus;
 import com.notpatch.nOrder.util.ItemStackHelper;
 import com.notpatch.nlib.effect.NSound;
@@ -12,7 +10,6 @@ import com.notpatch.nlib.util.ColorUtil;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Material;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -25,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class NewAdminOrderMenu extends FastInv implements Listener {
+public class NewContractMenu extends FastInv implements Listener {
 
     private final NOrder main;
 
@@ -64,8 +61,8 @@ public class NewAdminOrderMenu extends FastInv implements Listener {
     @Setter
     private int durationDays = 7; // Default expiration duration
 
-    public NewAdminOrderMenu() {
-        super(54, ColorUtil.hexColor("&6&lNew Admin Order"));
+    public NewContractMenu() {
+        super(54, ColorUtil.hexColor("&6&lNew Contract"));
         this.main = NOrder.getInstance();
         initializeMenu();
     }
@@ -114,7 +111,7 @@ public class NewAdminOrderMenu extends FastInv implements Listener {
                     .displayName(ColorUtil.hexColor("&e&lSelect Item"))
                     .lore(Arrays.asList(
                             ColorUtil.hexColor("&7Click to select an item"),
-                            ColorUtil.hexColor("&7for this admin order")
+                            ColorUtil.hexColor("&7for this contract")
                     ))
                     .build();
             setItem(10, selectItem, e -> new ItemSelectMenu(this).open((Player) e.getWhoClicked()));
@@ -247,7 +244,7 @@ public class NewAdminOrderMenu extends FastInv implements Listener {
                 .material(Material.LIME_STAINED_GLASS_PANE)
                 .displayName(ColorUtil.hexColor("&a&lConfirm"))
                 .lore(Arrays.asList(
-                        ColorUtil.hexColor("&7Create this admin order")
+                        ColorUtil.hexColor("&7Create this contract")
                 ))
                 .build();
         setItem(50, confirmItem, this::handleConfirm);
@@ -354,17 +351,17 @@ public class NewAdminOrderMenu extends FastInv implements Listener {
             return;
         }
 
-        // Create admin order
+        // Create contract
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime expiresAt = now.plusDays(durationDays);
-        String id = main.getAdminOrderManager().createRandomId();
+        String id = main.getContractManager().createRandomId();
 
         String customItemId = null;
         if (main.getCustomItemManager() != null && main.getCustomItemManager().hasAnyProvider()) {
             customItemId = main.getCustomItemManager().getCustomItemId(selectedItem);
         }
 
-        AdminOrder order = new AdminOrder(
+        Contract order = new Contract(
                 id,
                 selectedItem,
                 customItemId,
@@ -384,9 +381,9 @@ public class NewAdminOrderMenu extends FastInv implements Listener {
                 null  // lastCompletedAt
         );
 
-        main.getAdminOrderManager().addAdminOrder(order);
+        main.getContractManager().addContract(order);
 
-        player.sendMessage(ColorUtil.hexColor("&a&lAdmin order created successfully!"));
+        player.sendMessage(ColorUtil.hexColor("&a&lContract created successfully!"));
         player.sendMessage(ColorUtil.hexColor("&7Order ID: &e" + id));
         player.sendMessage(ColorUtil.hexColor("&7Item: &f" + selectedItem.getType().name()));
         player.sendMessage(ColorUtil.hexColor("&7Quantity: &f" + quantity));
@@ -400,8 +397,8 @@ public class NewAdminOrderMenu extends FastInv implements Listener {
         player.closeInventory();
 
         // Log action
-        main.getOrderLogger().logAdminAction(player.getName(), "CREATE_ADMIN_ORDER",
-                "Created admin order " + id + " for " + quantity + "x " + selectedItem.getType().name());
+        main.getOrderLogger().logAdminAction(player.getName(), "CREATE_CONTRACT",
+                "Created Contract " + id + " for " + quantity + "x " + selectedItem.getType().name());
     }
 
     private void processQuantityInput(Player player, String input) {

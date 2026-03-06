@@ -3,7 +3,7 @@ package com.notpatch.nOrder.util;
 import com.notpatch.nOrder.LanguageLoader;
 import com.notpatch.nOrder.NOrder;
 import com.notpatch.nOrder.Settings;
-import com.notpatch.nOrder.model.AdminOrder;
+import com.notpatch.nOrder.model.Contract;
 import com.notpatch.nOrder.model.BaseOrder;
 import com.notpatch.nOrder.model.Order;
 import com.notpatch.nOrder.model.ProgressBar;
@@ -37,9 +37,9 @@ public class StringUtil {
 
         // Calculate cooldown time for AdminOrder
         String cooldownTime = "";
-        if (order instanceof AdminOrder adminOrder) {
-            if (adminOrder.isInCooldown()) {
-                long remainingSeconds = adminOrder.getRemainingCooldownSeconds();
+        if (order instanceof Contract contract) {
+            if (contract.isInCooldown()) {
+                long remainingSeconds = contract.getRemainingCooldownSeconds();
                 long days = remainingSeconds / 86400;
                 long hours = (remainingSeconds % 86400) / 3600;
                 long minutes = (remainingSeconds % 3600) / 60;
@@ -89,7 +89,7 @@ public class StringUtil {
     }
 
 
-    private static String getItemDisplayName(Order order) {
+    private static String getItemDisplayName(BaseOrder order) {
         if (order.isCustomItem() && NOrder.getInstance().getCustomItemManager() != null) {
             String customName = NOrder.getInstance().getCustomItemManager().getCustomItemDisplayName(order.getItem());
             if (customName != null && !customName.isEmpty()) {

@@ -2,7 +2,7 @@ package com.notpatch.nOrder.gui;
 
 import com.notpatch.nOrder.LanguageLoader;
 import com.notpatch.nOrder.NOrder;
-import com.notpatch.nOrder.model.AdminOrder;
+import com.notpatch.nOrder.model.Contract;
 import com.notpatch.nOrder.model.OrderStatus;
 import com.notpatch.nOrder.util.ItemStackHelper;
 import com.notpatch.nlib.effect.NSound;
@@ -19,10 +19,10 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AdminOrderDetailsMenu extends FastInv {
+public class ContractDetailsMenu extends FastInv {
 
     private final NOrder main;
-    private final AdminOrder order;
+    private final Contract order;
 
     @Getter
     private int itemsDelivered = 0;
@@ -32,7 +32,7 @@ public class AdminOrderDetailsMenu extends FastInv {
 
     private boolean processed = false;
 
-    public AdminOrderDetailsMenu(AdminOrder order) {
+    public ContractDetailsMenu(Contract order) {
         super(54, ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("order-details-menu.title")));
         main = NOrder.getInstance();
         this.order = order;
@@ -149,7 +149,7 @@ public class AdminOrderDetailsMenu extends FastInv {
 
                     if (order.getRemaining() <= 0) {
                         order.complete();
-                        main.getAdminOrderManager().saveAdminOrders();
+                        main.getContractManager().saveContract(order);
 
                         main.getOrderLogger().logOrderCompleted(order);
                     }
