@@ -81,10 +81,10 @@ contract-usage: "&cUsage: /contract <category|create|delete|edit|list> [args]"
 contract-usage-create: "&cUsage: /contract create opens a menu to create a new contract."
 contract-usage-delete: "&cUsage: /contract delete <id> deletes the contract with the specified id."
 contract-usage-edit: "&cUsage: /contract edit <id> opens a menu to edit the contract with the specified id."
-contract-usage-list: "&cUsage: /contract list [category] lists all active contracts, optionally filtered by category."
+contract-usage-open: "&cUsage: /contract list [category] lists all active contracts, optionally filtered by category."
 
 # Contracts category usage
-contract-usage-category: "&cUsage: /contract category <create|edit|delete|list> [args]"
+contract-usage-category: "&cUsage: /contract category <create|edit|delete|open> [args]"
 contract-usage-category-create: "&cUsage: /contract category create opens a menu to create a new category."
 contract-usage-category-edit: "&cUsage: /contract category edit <id> opens a menu to edit the category with the specified id."
 contract-usage-category-delete: "&cUsage: /contract category delete <id> deletes the category with the specified id."

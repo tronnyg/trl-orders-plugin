@@ -2,8 +2,8 @@ package com.notpatch.nOrder.gui;
 
 import com.notpatch.nOrder.NOrder;
 import com.notpatch.nOrder.model.Contract;
-import com.notpatch.nOrder.model.ContractCategory;
 import com.notpatch.nOrder.model.OrderStatus;
+import com.notpatch.nOrder.model.ContractCategory;
 import com.notpatch.nOrder.util.ItemStackHelper;
 import com.notpatch.nlib.effect.NSound;
 import com.notpatch.nlib.fastinv.FastInv;
@@ -18,15 +18,17 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class NewContractMenu extends FastInv implements Listener {
+public class EditContractMenu extends FastInv implements Listener {
 
     private final NOrder main;
+    private final Contract originalContract;
 
     @Getter
     private ItemStack selectedItem;
@@ -63,14 +65,42 @@ public class NewContractMenu extends FastInv implements Listener {
     @Setter
     private int durationDays = 7; // Default expiration duration
 
-    public NewContractMenu() {
-        super(54, ColorUtil.hexColor("&6&lNew Contract"));
+    public EditContractMenu(Contract contract) {
+        super(54, ColorUtil.hexColor("&6&lEdit Contract"));
         this.main = NOrder.getInstance();
+        this.originalContract = contract;
+
+        // Map contract fields into editable menu fields.
+        // NOTE: getter names are assumed to exist on Contract; adjust if different.
+        try {
+            this.selectedItem = contract.getItem(); // adjust to getItemStack() if needed
+        } catch (NoSuchMethodError | Exception ex) {
+            this.selectedItem = null;
+        }
+
+        try { this.quantity = contract.getAmount(); } catch (Exception ignored) {}
+        try { this.pricePerItem = contract.getPrice(); } catch (Exception ignored) {}
+        try { this.isHighlighted = contract.isHighlight(); } catch (Exception ignored) {}
+        try { this.customName = contract.getCustomName() == null ? "" : contract.getCustomName(); } catch (Exception ignored) {}
+        try { this.categoryId = contract.getCategoryId(); } catch (Exception ignored) {}
+        try { this.cooldownDuration = contract.getCooldownDuration(); } catch (Exception ignored) {}
+        try { this.repeatable = contract.isRepeatable(); } catch (Exception ignored) {}
+
+        // Compute durationDays from createdAt -> expiresAt if available
+        try {
+            LocalDateTime created = contract.getCreatedAt();
+            LocalDateTime expires = contract.getExpirationDate();
+            if (created != null && expires != null) {
+                long days = Duration.between(created, expires).toDays();
+                if (days > 0) this.durationDays = (int) days;
+            }
+        } catch (Exception ignored) {}
+
         initializeMenu();
     }
 
     private void initializeMenu() {
-        // Background
+        // ...existing code...
         ItemStack background = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta backgroundMeta = background.getItemMeta();
         if (backgroundMeta != null) {
@@ -233,7 +263,7 @@ public class NewContractMenu extends FastInv implements Listener {
                 .material(Material.RED_STAINED_GLASS_PANE)
                 .displayName(ColorUtil.hexColor("&c&lCancel"))
                 .lore(Arrays.asList(
-                        ColorUtil.hexColor("&7Close without creating")
+                        ColorUtil.hexColor("&7Close without saving")
                 ))
                 .build();
         setItem(49, cancelItem, e -> {
@@ -246,7 +276,7 @@ public class NewContractMenu extends FastInv implements Listener {
                 .material(Material.LIME_STAINED_GLASS_PANE)
                 .displayName(ColorUtil.hexColor("&a&lConfirm"))
                 .lore(Arrays.asList(
-                        ColorUtil.hexColor("&7Create this contract")
+                        ColorUtil.hexColor("&7Save changes to this contract")
                 ))
                 .build();
         setItem(50, confirmItem, this::handleConfirm);
@@ -390,40 +420,64 @@ public class NewContractMenu extends FastInv implements Listener {
             return;
         }
 
-        // Create contract
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiresAt = now.plusDays(durationDays);
-        String id = main.getContractManager().createRandomId();
+        // Build updated contract preserving fields we don't edit
+        LocalDateTime createdAt = null;
+        LocalDateTime cooldownEndsAt = null;
+        LocalDateTime lastCompletedAt = null;
+        int delivered = 0;
+        int collected = 0;
+        OrderStatus status = OrderStatus.ACTIVE;
+        String originalCustomItemId = null;
+        try { createdAt = originalContract.getCreatedAt(); } catch (Exception ignored) {}
+        try { cooldownEndsAt = originalContract.getCooldownEndsAt(); } catch (Exception ignored) {}
+        try { lastCompletedAt = originalContract.getLastCompletedAt(); } catch (Exception ignored) {}
+        try { delivered = originalContract.getDelivered(); } catch (Exception ignored) {}
+        try { collected = originalContract.getCollected(); } catch (Exception ignored) {}
+        try { status = originalContract.getStatus(); } catch (Exception ignored) {}
+        try { originalCustomItemId = originalContract.getCustomItemId(); } catch (Exception ignored) {}
 
-        String customItemId = null;
-        if (main.getCustomItemManager() != null && main.getCustomItemManager().hasAnyProvider()) {
-            customItemId = main.getCustomItemManager().getCustomItemId(selectedItem);
+        // Recompute expiresAt based on createdAt + durationDays (fallback to now + duration)
+        LocalDateTime expiresAt;
+        if (createdAt != null) {
+            expiresAt = createdAt.plusDays(durationDays);
+        } else {
+            expiresAt = LocalDateTime.now().plusDays(durationDays);
+            if (createdAt == null) createdAt = LocalDateTime.now();
         }
 
-        Contract order = new Contract(
-                id,
+        String customItemId = originalCustomItemId;
+        try {
+            if (main.getCustomItemManager() != null && main.getCustomItemManager().hasAnyProvider()) {
+                customItemId = main.getCustomItemManager().getCustomItemId(selectedItem);
+            }
+        } catch (Exception ignored) {}
+
+        // Construct a new Contract instance using original id and preserved fields
+        Contract updated = new Contract(
+                originalContract.getId(),
                 selectedItem,
                 customItemId,
                 quantity,
                 pricePerItem,
-                0, // delivered
-                0, // collected
-                now,
+                delivered,
+                collected,
+                createdAt,
                 expiresAt,
                 isHighlighted,
-                OrderStatus.ACTIVE,
+                status,
                 categoryId,
                 customName.isEmpty() ? null : customName,
                 cooldownDuration,
                 repeatable,
-                null, // cooldownEndsAt
-                null  // lastCompletedAt
+                cooldownEndsAt,
+                lastCompletedAt
         );
 
-        main.getContractManager().addContract(order);
+        // Call update method on ContractManager (adjust method name if different)
+        main.getContractManager().updateContract(updated);
 
-        player.sendMessage(ColorUtil.hexColor("&a&lContract created successfully!"));
-        player.sendMessage(ColorUtil.hexColor("&7Order ID: &e" + id));
+        player.sendMessage(ColorUtil.hexColor("&a&lContract updated successfully!"));
+        player.sendMessage(ColorUtil.hexColor("&7Order ID: &e" + originalContract.getId()));
         player.sendMessage(ColorUtil.hexColor("&7Item: &f" + selectedItem.getType().name()));
         player.sendMessage(ColorUtil.hexColor("&7Quantity: &f" + quantity));
         player.sendMessage(ColorUtil.hexColor("&7Price: &f$" + pricePerItem + " each"));
@@ -436,8 +490,8 @@ public class NewContractMenu extends FastInv implements Listener {
         player.closeInventory();
 
         // Log action
-        main.getOrderLogger().logAdminAction(player.getName(), "CREATE_CONTRACT",
-                "Created Contract " + id + " for " + quantity + "x " + selectedItem.getType().name());
+        main.getOrderLogger().logAdminAction(player.getName(), "UPDATE_CONTRACT",
+                "Updated Contract " + originalContract.getId() + " to " + quantity + "x " + selectedItem.getType().name());
     }
 
     private void processQuantityInput(Player player, String input) {

@@ -530,4 +530,41 @@ public class ContractManager {
             // ensure connection auto-commit reset is handled by try-with-resources closing the connection
         }
     }
+
+    /**
+     * Update an existing contract both in the database and in the in-memory map.
+     * Returns true when the in-memory map was updated (and DB was reachable), false otherwise.
+     */
+    public boolean updateContract(Contract contract) {
+        if (contract == null) return false;
+
+        // Ensure DB is available before attempting persistence
+        if (!main.getDatabaseManager().isConnectionValid()) {
+            NLogger.error("Database connection is null. Cannot update contract.");
+            return false;
+        }
+
+        // Persist the full contract (insert or update)
+        saveContract(contract);
+
+        // Remove any existing mapping for this contract id
+        Iterator<Map.Entry<String, Map<String, Contract>>> it = contractsByCategory.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, Map<String, Contract>> entry = it.next();
+            Map<String, Contract> inner = entry.getValue();
+            if (inner.remove(contract.getId()) != null) {
+                if (inner.isEmpty()) {
+                    it.remove();
+                }
+                break; // contract IDs are unique, stop after found
+            }
+        }
+
+        // Put updated contract into its (possibly new) category bucket
+        String categoryKey = contract.getCategoryId() == null ? "" : contract.getCategoryId();
+        contractsByCategory.computeIfAbsent(categoryKey, k -> new ConcurrentHashMap<>())
+                .put(contract.getId(), contract);
+
+        return true;
+    }
 }

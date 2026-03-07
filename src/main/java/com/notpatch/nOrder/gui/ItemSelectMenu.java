@@ -79,6 +79,28 @@ public class ItemSelectMenu extends FastInv {
         updateItems();
     }
 
+    public ItemSelectMenu(EditContractMenu parentMenu) {
+        super(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getInt("item-select-menu.size"),
+                ColorUtil.hexColor(NOrder.getInstance().getConfigurationManager().getMenuConfiguration().getConfiguration().getString("item-select-menu.title")));
+
+        this.parentMenu = parentMenu;
+        main = NOrder.getInstance();
+        Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
+
+        this.availableItems = Settings.availableItems;
+        this.customItems = new ArrayList<>();
+
+        List<String> slotsStr = config.getStringList("item-select-menu.item-slots");
+        this.itemSlots = slotsStr.stream()
+                .map(Integer::parseInt)
+                .collect(Collectors.toList());
+
+        this.itemsPerPage = config.getInt("item-select-menu.pagination.items-per-page", 21);
+
+        loadMenuItems();
+        updateItems();
+    }
+
     private void loadMenuItems() {
         Configuration config = main.getConfigurationManager().getMenuConfiguration().getConfiguration();
         ConfigurationSection itemsSection = config.getConfigurationSection("item-select-menu.items");

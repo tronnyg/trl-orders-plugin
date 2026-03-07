@@ -2,6 +2,9 @@ package com.notpatch.nOrder.command;
 
 import com.notpatch.nOrder.LanguageLoader;
 import com.notpatch.nOrder.NOrder;
+import com.notpatch.nOrder.gui.ContractCategoryMenu;
+import com.notpatch.nOrder.gui.ContractDetailsMenu;
+import com.notpatch.nOrder.gui.EditContractMenu;
 import com.notpatch.nOrder.gui.NewContractMenu;
 import com.notpatch.nOrder.model.Contract;
 import com.notpatch.nOrder.model.ContractCategory;
@@ -41,22 +44,23 @@ public class ContractsCommand implements BasicCommand {
 
         switch (subCommand) {
             case "create" -> {
-                NOrder.getInstance().getMorePaperLib().scheduling().globalRegionalScheduler().run(() -> {
-                    new NewContractMenu().open(player);
-                });
+                handleCreateCommand(sender, executor, Arrays.copyOfRange(args, 1, args.length));
                 NSound.click(player);
             }
             case "edit" -> {
+                handleEditCommand(player, executor, Arrays.copyOfRange(args, 1, args.length));
                 NSound.click(player);
             }
             case "delete" -> {
+                handleDeleteCommand(player, executor, Arrays.copyOfRange(args, 1, args.length));
                 NSound.click(player);
             }
             case "category" -> {
                 handleCategoryCommand(sender, executor, Arrays.copyOfRange(args, 1, args. length));
                 NSound.click(player);
             }
-            case "list" -> {
+            case "open" -> {
+                handleOpenCommand(sender, executor, Arrays.copyOfRange(args, 1, args.length));
                 NSound.click(player);
             }
             default -> sendUsage(sender);
@@ -69,7 +73,7 @@ public class ContractsCommand implements BasicCommand {
         sender.sendMessage(LanguageLoader.getMessage("contract-usage-create"));
         sender.sendMessage(LanguageLoader.getMessage("contract-usage-edit"));
         sender.sendMessage(LanguageLoader.getMessage("contract-usage-delete"));
-        sender.sendMessage(LanguageLoader.getMessage("contract-usage-list"));
+        sender.sendMessage(LanguageLoader.getMessage("contract-usage-open"));
         sender.sendMessage(LanguageLoader.getMessage("contract-usage-category"));
     }
 
@@ -256,9 +260,99 @@ public class ContractsCommand implements BasicCommand {
                 }
             }
             default -> {
-                sender.sendMessage(ColorUtil.hexColor("&cUsage: /orderadmin category <create|delete|list>"));
+                sender.sendMessage(ColorUtil.hexColor("&cUsage: /orderadmin category <create|edit|delete|list>"));
             }
         }
+    }
+
+    private void handleOpenCommand(CommandSender sender, Entity entity, String[] args) {
+        if (!(entity instanceof Player player)) {
+            sender.sendMessage(ColorUtil.hexColor("&cThis command can only be used by players."));
+            return;
+        }
+
+        if (args.length < 1) {
+            sender.sendMessage(ColorUtil.hexColor("&cUsage: /contract open <categoryId>"));
+            return;
+        }
+
+        String categoryId = args[0];
+        ContractCategory category = NOrder.getInstance().getContractCategoryManager()
+                .getCategoryById(categoryId);
+
+        if (category == null) {
+            player.sendMessage(ColorUtil.hexColor("&cCategory not found: " + categoryId));
+            NSound.error(player);
+            return;
+        }
+
+        new ContractCategoryMenu(category, player).open(player);
+    }
+
+    private void handleEditCommand(CommandSender sender, Entity entity, String[] args) {
+        if (!(entity instanceof Player player)) {
+            sender.sendMessage(ColorUtil.hexColor("&cThis command can only be used by players."));
+            return;
+        }
+
+        if (args.length < 1) {
+            sender.sendMessage(ColorUtil.hexColor("&cUsage: /contract edit <contractId>"));
+            return;
+        }
+
+        String contractId = args[0];
+        Contract contract = NOrder.getInstance().getContractManager()
+                .getContractById(contractId);
+
+        if (contract == null) {
+            player.sendMessage(ColorUtil.hexColor("&cContract not found: " + contractId));
+            NSound.error(player);
+            return;
+        }
+
+        new EditContractMenu(contract).open(player);
+    }
+
+    private void handleDeleteCommand(CommandSender sender, Entity entity, String[] args) {
+        if (!(entity instanceof Player player)) {
+            sender.sendMessage(ColorUtil.hexColor("&cThis command can only be used by players."));
+            return;
+        }
+
+        if (args.length < 1) {
+            sender.sendMessage(ColorUtil.hexColor("&cUsage: /contract delete <contractId>"));
+            return;
+        }
+
+        String contractId = args[0];
+        Contract contract = NOrder.getInstance().getContractManager()
+                .getContractById(contractId);
+
+        if (contract == null) {
+            player.sendMessage(ColorUtil.hexColor("&cContract not found: " + contractId));
+            NSound.error(player);
+            return;
+        }
+
+        boolean success = NOrder.getInstance().getContractManager()
+                .removeContract(contractId);
+
+        if (success) {
+            player.sendMessage(ColorUtil.hexColor("&aContract deleted: " + contractId));
+            NSound.success(player);
+        } else {
+            player.sendMessage(ColorUtil.hexColor("&cFailed to delete contract."));
+            NSound.error(player);
+        }
+    }
+
+    private void handleCreateCommand(CommandSender sender, Entity entity, String[] args) {
+        if (!(entity instanceof Player player)) {
+            sender.sendMessage(ColorUtil.hexColor("&cThis command can only be used by players."));
+            return;
+        }
+
+        new NewContractMenu().open(player);
     }
 
     @Override
@@ -266,7 +360,7 @@ public class ContractsCommand implements BasicCommand {
         List<String> suggestions = new ArrayList<>();
 
         // top-level options
-        List<String> topOptions = Arrays.asList("category", "create", "delete", "edit", "list");
+        List<String> topOptions = Arrays.asList("category", "create", "delete", "edit", "open");
 
         String current;
         if (args.length > 0) {
@@ -304,7 +398,7 @@ public class ContractsCommand implements BasicCommand {
                 suggestions.addAll(ids);
                 break;
             }
-            case "list": {
+            case "open": {
                 // suggest category ids for list
                 List<String> catIds = NOrder.getInstance().getContractCategoryManager()
                         .getAllCategories()
